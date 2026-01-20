@@ -1,6 +1,13 @@
 <resources>
     <string name="app_name">My Application</string>
     <string name="appname">Dang</string>
+
+    <!-- Bottom Navigation Menu -->
+    <string name="nav_home">홈</string>
+    <string name="nav_shelter">보호소</string>
+    <string name="nav_like">좋아요</string>
+    <string name="nav_dictionary">도감</string>
+
     <string name="pretest_title">반려동물 입양 테스트</string>
     <string name="pretest_pass">테스트에 통과하신걸 축하드립니다!버튼을 눌러 시작하세요.</string>
     <string name="pretest_fail">다시 한번 생각해보시는건 어떨까요?</string>

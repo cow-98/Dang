@@ -17,6 +17,7 @@
         android:fontFamily="@font/hakgyoansimwooju"
         android:textSize="15sp"
         android:textColor="@color/basic"
+        android:contentDescription="좋아요 안내"
         android:text="삭제하시려면 옆으로 살짝 밀어주세요"/>
 
     <androidx.recyclerview.widget.RecyclerView
