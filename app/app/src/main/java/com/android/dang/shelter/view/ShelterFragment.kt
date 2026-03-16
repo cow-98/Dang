@@ -32,9 +32,6 @@ import com.kakao.vectormap.mapwidget.component.GuiLayout
 import com.kakao.vectormap.mapwidget.component.GuiText
 import com.kakao.vectormap.mapwidget.component.Orientation
 
-
-// TODO: api 호출 중에 로딩바? 띄워 유저가 상호작용하지 못하게 해야 함.
-// TODO: 검색결과가 없을시에 Toast 를 띄워 안내할것
 class ShelterFragment : Fragment() {
     private lateinit var binding: FragmentShelterBinding
     private lateinit var viewModel: ShelterViewModel
@@ -42,10 +39,11 @@ class ShelterFragment : Fragment() {
     private val duration = 500
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentShelterBinding.inflate(layoutInflater, container, false)
+    ): View {
+        binding = FragmentShelterBinding.inflate(inflater, container, false)
         viewModel = ViewModelProvider(this)[ShelterViewModel::class.java]
 
         viewModel.run {
@@ -55,48 +53,25 @@ class ShelterFragment : Fragment() {
             abandonedDogsList.observe(viewLifecycleOwner, abandonedDogObserver)
         }
 
+        Log.d(Constants.TestTAG, "Starting Kakao MapView")
         binding.mapView.start(object : KakaoMapReadyCallback() {
-
-            override fun getPosition(): LatLng {
-                return LatLng.from(37.393865, 127.115795)
-            }
+            override fun getPosition(): LatLng = LatLng.from(37.393865, 127.115795)
 
             override fun onMapReady(kakaoMap: KakaoMap) {
                 this@ShelterFragment.kakaoMap = kakaoMap
+                Log.d(Constants.TestTAG, "KakaoMap is ready")
+                renderDogsOnMap(viewModel.abandonedDogsList.value.orEmpty())
             }
         })
 
         return binding.root
     }
 
-    private fun setLabel(geoPoint: GeoPoint, dog: AbandonedShelter) {
-        val pos = LatLng.from(geoPoint.latitude, geoPoint.longitude)
-        val styles = kakaoMap?.labelManager
-            ?.addLabelStyles(LabelStyles.from(LabelStyle.from(R.drawable.icon_pink_marker)))
-        val options = LabelOptions.from(pos)
-            .setStyles(styles)
-            .setClickable(true)
-
-        val layer = kakaoMap?.labelManager?.layer
-        val label: Label? = layer?.addLabel(options)
-        label?.tag = dog.desertionNo
-
-        Log.d(Constants.TestTAG, "setPin: ${label?.labelId}")
-        kakaoMap?.setOnLabelClickListener { kakaoMap, layer, label ->
-            viewModel.getShelterInfo(label.tag as String)?.let {
-                setShelterInfo(it)
-                showInfoWindow(it)
-            }
-        }
-        kakaoMap?.moveCamera(
-            CameraUpdateFactory.newCenterPosition(pos, 13),
-            CameraAnimation.from(duration)
-        )
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d(Constants.TestTAG, "Requesting initial shelter region list")
         viewModel.getSidoList()
+
         binding.selectLocationMain.setOnClickListener {
             viewModel.sido.value?.item?.let { list ->
                 val builder = SidoDialog(list, onClickSido)
@@ -115,46 +90,79 @@ class ShelterFragment : Fragment() {
         }
     }
 
-    private val onClickSido = { sido: Sido ->
-        Log.d("test", "onClickSido: $sido")
-        viewModel.run {
-            getSigunguList(sido.orgCd)
-            setUprCode(sido.orgCd)
+    private fun setLabel(geoPoint: GeoPoint, dog: AbandonedShelter) {
+        val pos = LatLng.from(geoPoint.latitude, geoPoint.longitude)
+        val styles = kakaoMap?.labelManager
+            ?.addLabelStyles(LabelStyles.from(LabelStyle.from(R.drawable.icon_pink_marker)))
+        val options = LabelOptions.from(pos)
+            .setStyles(styles)
+            .setClickable(true)
+
+        val layer = kakaoMap?.labelManager?.layer
+        val label: Label? = layer?.addLabel(options)
+        label?.tag = dog.desertionNo
+
+        Log.d(Constants.TestTAG, "setPin: ${label?.labelId}")
+        kakaoMap?.setOnLabelClickListener { _, _, clickedLabel ->
+            viewModel.getShelterInfo(clickedLabel.tag as String)?.let {
+                setShelterInfo(it)
+                showInfoWindow(it)
+            }
         }
+        kakaoMap?.moveCamera(
+            CameraUpdateFactory.newCenterPosition(pos, 13),
+            CameraAnimation.from(duration)
+        )
+    }
+
+    private val onClickSido = { sido: Sido ->
+        Log.d(Constants.TestTAG, "onClickSido: $sido")
+        viewModel.setUprCode(sido.orgCd)
+        viewModel.getSigunguList(sido.orgCd)
         binding.selectLocationMain.text = sido.orgdownNm
     }
 
     private val onClickSigungu = { sigungu: Sido ->
-        sigungu.orgCd.let { viewModel.setOrgCode(it) }
+        viewModel.setOrgCode(sigungu.orgCd)
         binding.selectLocationDetail.text = sigungu.orgdownNm
         viewModel.getAbandonedDogs()
     }
 
     private val sidoObserver = Observer<Items<Sido>> { sidoList ->
-        binding.selectLocationMain.text = sidoList.item[0].orgdownNm
-        viewModel.getSigunguList(sidoList.item[0].orgCd)
+        val defaultSido = sidoList.item.firstOrNull() ?: return@Observer
+        binding.selectLocationMain.text = defaultSido.orgdownNm
+        viewModel.setUprCode(defaultSido.orgCd)
+        viewModel.getSigunguList(defaultSido.orgCd)
     }
 
     private val sigunguObserver = Observer<Items<Sido>> { sigunguList ->
         removeAllMarkers()
-        if (sigunguList.item.isNotEmpty()) {
-            binding.selectLocationDetail.text = sigunguList.item[0].orgdownNm
+        val defaultSigungu = sigunguList.item.firstOrNull()
+        if (defaultSigungu != null) {
+            binding.selectLocationDetail.text = defaultSigungu.orgdownNm
+            viewModel.setOrgCode(defaultSigungu.orgCd)
+            viewModel.getAbandonedDogs()
             return@Observer
         }
         binding.selectLocationDetail.text = ""
     }
 
-    private val abandonedDogObserver = Observer<List<AbandonedShelter>> {
-        Log.d("test", "main abandonedDogs: ${it.size}")
-        it.forEach { dog ->
-            dog.careAddr?.let { it1 ->
-                val addr = viewModel.findGeoPoint(it1)
-                if (addr != null && dog.desertionNo != null) {
-                    setLabel(addr, dog)
-                }
-            }
+    private val abandonedDogObserver = Observer<List<AbandonedShelter>> { dogs ->
+        Log.d(Constants.TestTAG, "abandonedDogs updated: ${dogs.size}")
+        renderDogsOnMap(dogs)
+    }
+
+    private fun renderDogsOnMap(dogs: List<AbandonedShelter>) {
+        if (kakaoMap == null) {
+            Log.d(Constants.TestTAG, "Skipping marker render because KakaoMap is not ready yet")
+            return
         }
-        Log.d(Constants.TestTAG, "dogsss: $it")
+
+        removeAllMarkers()
+        dogs.forEach { dog ->
+            dog.pos?.let { setLabel(it, dog) }
+        }
+        Log.d(Constants.TestTAG, "Rendered shelter markers: ${dogs.size}")
     }
 
     private fun setShelterInfo(dog: AbandonedShelter) = with(binding) {
@@ -164,15 +172,15 @@ class ShelterFragment : Fragment() {
     }
 
     private fun showInfoWindow(dog: AbandonedShelter) {
+        val dogPos = dog.pos ?: return
         kakaoMap?.mapWidgetManager?.infoWindowLayer?.removeAll()
 
-        val pos = LatLng.from(dog.pos!!.latitude, dog.pos.longitude)
+        val pos = LatLng.from(dogPos.latitude, dogPos.longitude)
         val body = GuiLayout(Orientation.Horizontal)
         body.setPadding(15, 15, 15, 15)
 
         val bgImage = GuiImage(R.drawable.icon_window_body, true)
         bgImage.setFixedArea(5, 5, 5, 5)
-
         body.setBackground(bgImage)
 
         val text = GuiText(dog.careNm)
@@ -183,10 +191,11 @@ class ShelterFragment : Fragment() {
         options.setBody(body)
         options.setBodyOffset(0f, -100f)
 
-        kakaoMap!!.mapWidgetManager!!.infoWindowLayer.addInfoWindow(options)
+        kakaoMap?.mapWidgetManager?.infoWindowLayer?.addInfoWindow(options)
     }
 
     private fun removeAllMarkers() {
+        kakaoMap?.labelManager?.layer?.removeAll()
         kakaoMap?.mapWidgetManager?.infoWindowLayer?.removeAll()
         with(binding) {
             shelterName.text = ""

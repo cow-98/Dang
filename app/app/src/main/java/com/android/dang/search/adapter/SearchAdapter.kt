@@ -61,15 +61,15 @@ class SearchAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 val searchHolder = holder as SearchHolder
 
                 val address = currentItem.careAddr
-                val parts = address.split(" ")
-                val result = "#${parts[0]} ${parts[1]}"
+                val parts = address?.split(" ")
+                val result = "#${parts?.get(0)} ${parts?.get(1)}"
 
                 Glide.with(searchHolder.itemView.context)
                     .load(currentItem.popfile)
                     .into(searchHolder.image)
 
                 val text2 = currentItem.kindCd
-                val result2 = text2.replace("[개] ", "")
+                val result2 = text2?.replace("[개] ", "")
                 searchHolder.dogKind.text = result2
 
                 var text1 = "#${currentItem.age}"

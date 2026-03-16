@@ -7,22 +7,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android.dang.R
-import com.android.dang.databinding.BottomNavigationBinding
 import com.android.dang.databinding.FragmentHomeBinding
 import com.android.dang.home.homeAdapter.HomeAdapter
 import com.android.dang.home.retrofit.HomeData
-import com.android.dang.home.retrofit.HomeItemModel
 import com.android.dang.home.retrofit.RetrofitClient.apiService
 import com.android.dang.home.retrofit.Util
-import com.android.dang.search.SearchFragment
 import com.android.dang.search.searchItemModel.SearchDogData
 import com.android.dang.shelter.view.ShelterFragment
 import com.android.dang.util.PrefManager
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -82,70 +77,88 @@ class HomeFragment : Fragment() {
     }
 
     private fun homeResult() {
-        Log.d("homeFragment", "homeResult")
+        Log.d("homeFragment", "homeResult start")
+
         apiService.homeDang(
-            Util.KEY, 50, "json", 417000
-        )
-            .enqueue(object : Callback<HomeData?> {
-                override fun onResponse(call: Call<HomeData?>, response: Response<HomeData?>) {
-                    if (response.isSuccessful) {
-                        val homeData = response.body()
-                        val likeItems = PrefManager.getLikeItem(mContext)
-                        Log.d("homefragment","likeItems.size:${likeItems.size}")
-                        homeData?.response?.body?.items?.item?.forEach { item ->
-                            val popfile = item.popfile
-                            val kindCd = item.kindCd
-                            val age = item.age
-                            val careAddr = item.careAddr
-                            val processState = item.processState
-                            val sexCd = item.sexCd
-                            val neuterYn = item.neuterYn
-                            val weight = item.weight
-                            val specialMark = item.specialMark
-                            val noticeNo = item.noticeNo
-                            val happenPlace = item.happenPlace
-                            val colorCd = item.colorCd
-                            val careNm = item.careNm
-                            val careTel = item.careTel
-                            var isLike = false
+            serviceKey = Util.KEY,
+            numOfRows = 50,
+            pageNo = 1,
+            type = "json",
+            upkind = 417000
+        ).enqueue(object : Callback<HomeData?> {
 
-                            val likedDog = likeItems.find { it.popfile == item.popfile }
-                            if (likedDog != null) {
-                               isLike = true
-                            }
-                            resItems.add(
-                                SearchDogData(
-                                    popfile,
-                                    kindCd,
-                                    age,
-                                    careAddr,
-                                    processState,
-                                    sexCd,
-                                    neuterYn,
-                                    weight,
-                                    specialMark,
-                                    noticeNo,
-                                    happenPlace,
-                                    colorCd,
-                                    careNm,
-                                    careTel,
-                                    isLike
-                                )
+            override fun onResponse(call: Call<HomeData?>, response: Response<HomeData?>) {
+                Log.d("homeFragment", "response.code = ${response.code()}")
+                Log.d("homeFragment", "response.isSuccessful = ${response.isSuccessful}")
+                Log.d("homeFragment", "raw body = ${response.body()}")
+
+                if (response.isSuccessful) {
+                    val homeData = response.body()
+                    Log.d("homeFragment", "header = ${homeData?.response?.header}")
+                    Log.d("homeFragment", "body = ${homeData?.response?.body}")
+
+                    val itemList = homeData?.response?.body?.items?.item
+                    Log.d("homeFragment", "itemList null? = ${itemList == null}")
+                    Log.d("homeFragment", "itemList size = ${itemList?.size}")
+
+                    val likeItems = PrefManager.getLikeItem(mContext)
+                    Log.d("homeFragment", "likeItems.size = ${likeItems.size}")
+
+                    resItems.clear()
+
+                    itemList?.forEach { item ->
+                        Log.d("homeFragment", "item = $item")
+
+                        val popfile = item.popfile1
+                        val kindCd = item.kindFullNm ?: item.kindNm ?: item.kindCd
+                        val age = item.age
+                        val careAddr = item.careAddr
+                        val processState = item.processState
+                        val sexCd = item.sexCd
+                        val neuterYn = item.neuterYn
+                        val weight = item.weight
+                        val specialMark = item.specialMark
+                        val noticeNo = item.noticeNo
+                        val happenPlace = item.happenPlace
+                        val colorCd = item.colorCd
+                        val careNm = item.careNm
+                        val careTel = item.careTel
+
+                        val isLike = likeItems.find { it.popfile == item.popfile1 } != null
+
+                        resItems.add(
+                            SearchDogData(
+                                popfile,
+                                kindCd,
+                                age,
+                                careAddr,
+                                processState,
+                                sexCd,
+                                neuterYn,
+                                weight,
+                                specialMark,
+                                noticeNo,
+                                happenPlace,
+                                colorCd,
+                                careNm,
+                                careTel,
+                                isLike
                             )
-                            Log.d("homefragment", "popfile = $popfile / isLike = $isLike")
-                        }
-                        Log.d("js", "$resItems")
-                    } else {
-                        Log.e("error", "${response.code()}")
+                        )
                     }
+
+                    Log.d("homeFragment", "resItems.size = ${resItems.size}")
                     adapter.addItem(resItems)
-
+                } else {
+                    Log.e("homeFragment", "error code = ${response.code()}")
+                    Log.e("homeFragment", "error body = ${response.errorBody()?.string()}")
                 }
+            }
 
-                override fun onFailure(call: Call<HomeData?>, t: Throwable) {
-                    Log.e("API Error", "Error: ${t.message}")
-                }
-            })
+            override fun onFailure(call: Call<HomeData?>, t: Throwable) {
+                Log.e("homeFragment", "API Error: ${t.message}", t)
+            }
+        })
     }
 
     override fun onDestroyView() {

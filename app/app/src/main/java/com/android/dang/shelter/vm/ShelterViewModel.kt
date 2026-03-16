@@ -21,13 +21,14 @@ import java.io.IOException
 
 class ShelterViewModel : ViewModel() {
     private lateinit var geocoder: Geocoder
+
     val sido: LiveData<Items<Sido>>
         get() = _sido
-    private val _sido: MutableLiveData<Items<Sido>> = MutableLiveData()
+    private val _sido = MutableLiveData<Items<Sido>>()
 
     val sigungu: LiveData<Items<Sido>>
         get() = _sigungu
-    private val _sigungu: MutableLiveData<Items<Sido>> = MutableLiveData()
+    private val _sigungu = MutableLiveData<Items<Sido>>()
 
     private val orgCode: LiveData<String>
         get() = _orgCode
@@ -39,53 +40,61 @@ class ShelterViewModel : ViewModel() {
 
     val abandonedDogsList: LiveData<List<AbandonedShelter>>
         get() = _abandonedDogsList
-    private val _abandonedDogsList =
-        MutableLiveData((listOf(AbandonedShelter())))
+    private val _abandonedDogsList = MutableLiveData<List<AbandonedShelter>>(emptyList())
 
     fun getSidoList() {
+        Log.d(Constants.TestTAG, "getSidoList requested")
         DangClient.api.getSidoList().enqueue(object : Callback<SidoRes> {
             override fun onResponse(call: Call<SidoRes>, response: Response<SidoRes>) {
                 if (!response.isSuccessful) {
-                    // Failed
+                    Log.e(Constants.TestTAG, "getSidoList failed: ${response.code()}")
                     return
                 }
 
-                response.body()?.response?.body?.items.let {
-                    Log.d("test", "onResponse: $this")
-                    _sido.value = it
+                val items = response.body()?.response?.body?.items
+                if (items == null) {
+                    Log.e(Constants.TestTAG, "getSidoList returned an empty body")
+                    return
                 }
+
+                Log.d(Constants.TestTAG, "getSidoList success: ${items.item.size}")
+                _sido.value = items
             }
 
             override fun onFailure(call: Call<SidoRes>, t: Throwable) {
-
+                Log.e(Constants.TestTAG, "getSidoList onFailure: ${t.localizedMessage}", t)
             }
         })
     }
 
     fun getSigunguList(code: String) {
+        Log.d(Constants.TestTAG, "getSigunguList requested: $code")
         DangClient.api.getSigunguList(code = code).enqueue(object : Callback<SidoRes> {
             override fun onResponse(call: Call<SidoRes>, response: Response<SidoRes>) {
-                Log.d("test", "sigungu onResponse: $response")
-                val sigunguList = response.body()?.response?.body?.items
                 if (!response.isSuccessful) {
+                    Log.e(Constants.TestTAG, "getSigunguList failed: ${response.code()}")
                     return
                 }
-                if (!sigunguList?.item.isNullOrEmpty()) {
-                    _sigungu.value = sigunguList!!
+
+                val sigunguList = response.body()?.response?.body?.items
+                if (sigunguList == null) {
+                    Log.e(Constants.TestTAG, "getSigunguList returned an empty body")
+                    _sigungu.value = Items(emptyList())
                     return
                 }
-                _sigungu.value = Items(mutableListOf())
+
+                Log.d(Constants.TestTAG, "getSigunguList success: ${sigunguList.item.size}")
+                _sigungu.value = sigunguList
             }
 
             override fun onFailure(call: Call<SidoRes>, t: Throwable) {
-                Log.d("test", "sigungunn onFailure: ${t.localizedMessage}")
+                Log.e(Constants.TestTAG, "getSigunguList onFailure: ${t.localizedMessage}", t)
             }
         })
     }
 
-
     fun getAbandonedDogs() {
-        Log.d("test", "abandonedDogShelter: ${orgCode.value} / $uprCode.value")
+        Log.d(Constants.TestTAG, "getAbandonedDogs requested: org=${orgCode.value}, upr=${uprCode.value}")
         DangClient.api.abandonedDogShelter(
             uprCode = uprCode.value,
             orgCode = orgCode.value,
@@ -96,26 +105,27 @@ class ShelterViewModel : ViewModel() {
                 call: Call<AbandonedDogRes?>,
                 response: Response<AbandonedDogRes?>
             ) {
-                val abandonedDogList = response.body()?.response?.body?.items?.item?.toMutableList()
                 if (!response.isSuccessful) {
+                    Log.e(Constants.TestTAG, "getAbandonedDogs failed: ${response.code()}")
                     return
                 }
-                if (abandonedDogList.isNullOrEmpty()) {
-                    _abandonedDogsList.value = listOf()
-                    return
-                }
-                abandonedDogList.forEachIndexed { index, dog -> //자동으로 index에는 index값이 i는 value값이 들어감
-                    abandonedDogList[index] = dog?.copy(
-                        pos = findGeoPoint(dog.careAddr ?: "")
-                    )
-               }
 
-                _abandonedDogsList.value = abandonedDogList?.filterNotNull()
-                Log.d(Constants.TestTAG, "abandoned onResponse: ${response.body()?.response?.body}")
+                val dogs = response.body()
+                    ?.response
+                    ?.body
+                    ?.items
+                    ?.item
+                    .orEmpty()
+                    .mapNotNull { dog ->
+                        dog?.copy(pos = findGeoPoint(dog.careAddr.orEmpty()))
+                    }
+
+                _abandonedDogsList.value = dogs
+                Log.d(Constants.TestTAG, "getAbandonedDogs success: ${dogs.size}")
             }
 
             override fun onFailure(call: Call<AbandonedDogRes?>, t: Throwable) {
-
+                Log.e(Constants.TestTAG, "getAbandonedDogs onFailure: ${t.localizedMessage}", t)
             }
         })
     }
@@ -137,20 +147,18 @@ class ShelterViewModel : ViewModel() {
     }
 
     fun findGeoPoint(address: String): GeoPoint? {
-        val addr: Address
         var location: GeoPoint? = null
         try {
-            val listAddress: List<Address>? = geocoder.getFromLocationName(address, 1)
-            if (listAddress!!.isNotEmpty()) { // 주소값이 존재 하면
-                addr = listAddress[0] // Address형태로
-                val lat = (addr.latitude)
-                val lng = (addr.longitude)
+            val listAddress: List<Address> = geocoder.getFromLocationName(address, 1).orEmpty()
+            if (listAddress.isNotEmpty()) {
+                val addr = listAddress[0]
+                val lat = addr.latitude
+                val lng = addr.longitude
                 Log.d(Constants.TestTAG, "findGeoPoint: $lat / $lng")
                 location = GeoPoint(lat, lng)
-                Log.d(Constants.TestTAG, "주소로부터 취득한 위도 : $lat, 경도 : $lng")
             }
         } catch (e: IOException) {
-            e.printStackTrace()
+            Log.e(Constants.TestTAG, "findGeoPoint failed: ${e.localizedMessage}", e)
         }
         return location
     }

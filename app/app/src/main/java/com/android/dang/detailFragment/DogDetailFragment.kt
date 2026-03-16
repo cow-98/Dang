@@ -27,7 +27,7 @@ class DogDetailFragment : Fragment(R.layout.fragment_dog_detail) {
             .load(detailData.popfile)
             .into(binding.dogImg)
         val text2 = detailData.kindCd
-        val result2 = text2.replace("[개] ", "")
+        val result2 = text2?.replace("[개] ", "")
         binding.dogName.text = result2
         binding.dogId.text = detailData.noticeNo
         var text1 = "# 접수 일시 - ${detailData.age}\n"

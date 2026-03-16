@@ -72,8 +72,8 @@ class HomeAdapter(private val mContext: Context) :
         Log.d("homeadapter", "popfile = ${currentItem.popfile} / isLike = ${currentItem.isLiked}")
 
         val address = currentItem.careAddr
-        val parts = address.split(" ")
-        val result = "#${parts[0]} ${parts[1]}"
+        val parts = address?.split(" ")
+        val result = "#${parts?.get(0)} ${parts?.get(1)}"
 
         Glide.with(mContext)
             .load(currentItem.popfile)

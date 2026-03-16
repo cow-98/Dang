@@ -1,52 +1,123 @@
 package com.android.dang.home.retrofit
 
-data class HomeData(
-    val response: Response,
+import com.google.gson.annotations.SerializedName
 
-    )
+data class HomeData(
+    @SerializedName("response")
+    val response: Response
+)
+
 data class Response(
+    @SerializedName("header")
     val header: Header,
-    val body: Body,
+    @SerializedName("body")
+    val body: Body
 )
 
 data class Header(
-    val reqno: Long,
-    val resultcode: Long,
-    val resultmsg: String,
+    @SerializedName("reqNo")
+    val reqNo: Long?,
+    @SerializedName("resultCode")
+    val resultCode: String?,
+    @SerializedName("resultMsg")
+    val resultMsg: String?
 )
 
 data class Body(
-    val items: Items,
-    val numofrows: Long,
-    val pageno: Long,
-    val totalcount: Long,
+    @SerializedName("items")
+    val items: Items?,
+    @SerializedName("numOfRows")
+    val numOfRows: Int?,
+    @SerializedName("pageNo")
+    val pageNo: Int?,
+    @SerializedName("totalCount")
+    val totalCount: Int?
 )
 
 data class Items(
-    val item: List<Item>,
+    @SerializedName("item")
+    val item: List<Item>?
 )
 
 data class Item(
-    val desertionno: Long,
-    val filename: String,
-    val happendt: Long,
-    val happenPlace: String,
-    val kindCd: String,
-    val colorCd: String,
-    val age: String,
-    val weight: String,
-    val noticeNo: String,
-    val noticesdt: Long,
-    val noticeedt: Long,
-    val popfile: String,
-    val processState: String,
-    val sexCd: String,
-    val neuterYn: String,
-    val specialMark: String,
-    val careNm: String,
-    val careTel: String,
-    val careAddr: String,
-    val orgNm: String,
-    val chargenm: String,
-    val officetel: String,
+    @SerializedName("desertionNo")
+    val desertionNo: String?,
+
+    @SerializedName("happenDt")
+    val happenDt: String?,
+
+    @SerializedName("happenPlace")
+    val happenPlace: String?,
+
+    @SerializedName("kindFullNm")
+    val kindFullNm: String?,
+
+    @SerializedName("upKindCd")
+    val upKindCd: String?,
+
+    @SerializedName("upKindNm")
+    val upKindNm: String?,
+
+    @SerializedName("kindCd")
+    val kindCd: String?,
+
+    @SerializedName("kindNm")
+    val kindNm: String?,
+
+    @SerializedName("colorCd")
+    val colorCd: String?,
+
+    @SerializedName("age")
+    val age: String?,
+
+    @SerializedName("weight")
+    val weight: String?,
+
+    @SerializedName("noticeNo")
+    val noticeNo: String?,
+
+    @SerializedName("noticeSdt")
+    val noticeSdt: String?,
+
+    @SerializedName("noticeEdt")
+    val noticeEdt: String?,
+
+    @SerializedName("popfile1")
+    val popfile1: String?,
+
+    @SerializedName("popfile2")
+    val popfile2: String?,
+
+    @SerializedName("processState")
+    val processState: String?,
+
+    @SerializedName("sexCd")
+    val sexCd: String?,
+
+    @SerializedName("neuterYn")
+    val neuterYn: String?,
+
+    @SerializedName("specialMark")
+    val specialMark: String?,
+
+    @SerializedName("careRegNo")
+    val careRegNo: String?,
+
+    @SerializedName("careNm")
+    val careNm: String?,
+
+    @SerializedName("careTel")
+    val careTel: String?,
+
+    @SerializedName("careAddr")
+    val careAddr: String?,
+
+    @SerializedName("careOwnerNm")
+    val careOwnerNm: String?,
+
+    @SerializedName("orgNm")
+    val orgNm: String?,
+
+    @SerializedName("updTm")
+    val updTm: String?
 )

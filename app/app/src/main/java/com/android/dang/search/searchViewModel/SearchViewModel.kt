@@ -29,8 +29,8 @@ class SearchViewModel : ViewModel() {
         currentFilter = criteria
 
         val filteredList = resetList.filter { item ->
-            val ageInt = """\d+""".toRegex().find(item.age)?.value?.toIntOrNull() ?: 0
-            val sizeInt = """\d+""".toRegex().find(item.weight)?.value?.toIntOrNull() ?: 0
+            val ageInt = """\d+""".toRegex().find(item.age.orEmpty())?.value?.toIntOrNull() ?: 0
+            val sizeInt = """\d+""".toRegex().find(item.weight.orEmpty())?.value?.toIntOrNull() ?: 0
 
             (criteria.minAge == null || ageInt >= criteria.minAge!!) &&
                     (criteria.maxAge == null || ageInt <= criteria.maxAge!!) &&

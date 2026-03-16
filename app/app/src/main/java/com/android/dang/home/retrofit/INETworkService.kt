@@ -5,11 +5,12 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface INETworkService {
-    @GET("abandonmentPublic")
+    @GET("abandonmentPublic_v2")
     fun homeDang(
-        @Query("serviceKey") serviceKey: String,
+        @Query("serviceKey", encoded = true) serviceKey: String,
         @Query("numOfRows") numOfRows: Int,
-        @Query("_type") type: String,
+        @Query("pageNo") pageNo: Int = 1,
+        @Query("_type") type: String = "json",
         @Query("upkind") upkind: Int
     ) : Call<HomeData?>
 }
