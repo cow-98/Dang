@@ -1,11 +1,11 @@
 package com.android.dang.dictionary
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
-import android.widget.AdapterView.OnItemSelectedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -13,24 +13,24 @@ import com.android.dang.databinding.FragmentDictionaryBinding
 import com.android.dang.dictionary.data.BreedsSpinnerData
 import com.android.dang.dictionary.retrofit.NetWorkClient
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 class DictionaryFragment : Fragment() {
 
-    private lateinit var binding: FragmentDictionaryBinding
+    private var _binding: FragmentDictionaryBinding? = null
+    private val binding: FragmentDictionaryBinding
+        get() = _binding!!
     private var mBreedList = arrayListOf<BreedsSpinnerData>()
     private val dictionaryListAdapter by lazy {
         DictionaryListAdapter()
     }
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-
-        binding = FragmentDictionaryBinding.inflate(inflater, container, false)
+    ): View {
+        _binding = FragmentDictionaryBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -38,43 +38,66 @@ class DictionaryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.dictionaryRecyclerView.adapter = dictionaryListAdapter
-        binding.dictionaryRecyclerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        binding.dictionaryRecyclerView.layoutManager =
+            LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
-
-        lifecycleScope.launch {
-            //품종리스트 전체확보를 위해서 200으로 지정
-            var breedsDatas = NetWorkClient.dogNetWork.getBreeds(
-                NetWorkClient.API_AUTHKEY, hashMapOf(
-                    "limit" to 200,
-                    "page" to 0
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val breedsDatas = NetWorkClient.dogNetWork.getBreeds(
+                    NetWorkClient.API_AUTHKEY,
+                    hashMapOf(
+                        "limit" to 200,
+                        "page" to 0
+                    )
                 )
-            )
 
-            requireActivity().runOnUiThread {
-                mBreedList.clear()
-                mBreedList.add(BreedsSpinnerData(0, "전체"))
-                mBreedList.addAll(breedsDatas.map { breedItem ->
-                    BreedsSpinnerData(breedItem.id, breedItem.name)
-                })
-
-                binding.dictionarySpinner.adapter = BreedsSpinnerAdapter(requireContext(), mBreedList)
-                binding.dictionarySpinner.onItemSelectedListener = object : OnItemSelectedListener{
-                    override fun onItemSelected(p0: AdapterView<*>?, p1: View?, position: Int, id: Long) {
-                        if(position == 0) {
-                            (binding.dictionaryRecyclerView.adapter as DictionaryListAdapter).addItems(breedsDatas, true)
-                            return
-                        }
-
-                        val id = mBreedList[position].id
-                        breedsDatas.find {it.id == id}?.let {
-                            (binding.dictionaryRecyclerView.adapter as DictionaryListAdapter).addItems(arrayListOf(it), true)
-                        }
-                    }
-
-                    override fun onNothingSelected(p0: AdapterView<*>?) {}
+                if (_binding == null || !isAdded) {
+                    return@launch
                 }
+
+                mBreedList.clear()
+                mBreedList.add(BreedsSpinnerData(0, "\uC804\uCCB4"))
+                mBreedList.addAll(
+                    breedsDatas.map { breedItem ->
+                        BreedsSpinnerData(breedItem.id, breedItem.name)
+                    }
+                )
+
+                binding.dictionarySpinner.adapter =
+                    BreedsSpinnerAdapter(requireContext(), mBreedList)
+                binding.dictionarySpinner.onItemSelectedListener =
+                    object : AdapterView.OnItemSelectedListener {
+                        override fun onItemSelected(
+                            parent: AdapterView<*>?,
+                            selectedView: View?,
+                            position: Int,
+                            id: Long
+                        ) {
+                            if (position == 0) {
+                                (binding.dictionaryRecyclerView.adapter as DictionaryListAdapter)
+                                    .addItems(breedsDatas, true)
+                                return
+                            }
+
+                            val breedId = mBreedList[position].id
+                            breedsDatas.find { it.id == breedId }?.let {
+                                (binding.dictionaryRecyclerView.adapter as DictionaryListAdapter)
+                                    .addItems(arrayListOf(it), true)
+                            }
+                        }
+
+                        override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+                    }
+            } catch (e: HttpException) {
+                Log.e("dictionaryFragment", "Dictionary API error: ${e.code()}", e)
+            } catch (e: Exception) {
+                Log.e("dictionaryFragment", "Dictionary load failed: ${e.message}", e)
             }
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

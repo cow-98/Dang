@@ -17,7 +17,7 @@ import com.android.dang.shelter.view.ShelterFragment
 import com.google.android.material.snackbar.Snackbar
 
 
-class MainActivity : AppCompatActivity(), SearchFragment.DogData {
+class MainActivity : AppCompatActivity(), SearchFragment.DogData, HomeFragment.DogData {
 
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     val dogDetailFragment = DogDetailFragment()
@@ -77,6 +77,7 @@ class MainActivity : AppCompatActivity(), SearchFragment.DogData {
 
         binding.icBack.setOnClickListener {}
 
+        homeFragment.dogData(this)
         searchFragment.dogData(this)
 
     }
@@ -92,9 +93,9 @@ class MainActivity : AppCompatActivity(), SearchFragment.DogData {
             .setReorderingAllowed(true).addToBackStack(null).commit()
     }
 
-    override fun pass(data: SearchDogData) {
-        dogDetailFragment.receiveData(data)
-        Log.d("aaa", "$data aaa")
+    override fun pass(list: SearchDogData) {
+        dogDetailFragment.receiveData(list)
+        Log.d("aaa", "$list aaa")
         setFragment(dogDetailFragment)
     }
 

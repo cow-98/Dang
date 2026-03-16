@@ -1,7 +1,6 @@
 package com.android.dang.home
 
 import android.content.Context
-import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -26,35 +25,25 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private lateinit var mContext: Context
-    private var resItems: ArrayList<SearchDogData> = ArrayList()
+    private val resItems = ArrayList<SearchDogData>()
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: HomeAdapter
-
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        _binding = FragmentHomeBinding.inflate(layoutInflater)
-        Log.d("homefragment", "onCreate")
-
-    }
+    private var passData: DogData? = null
+    private var isHomeLoaded = false
+    private var currentHomeCount = INITIAL_HOME_COUNT
+    private var homeCall: Call<HomeData?>? = null
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         mContext = context
-        Log.d("homefragment", "onAttach")
     }
 
-    override fun onResume() {
-        super.onResume()
-        Log.d("homefragment", "onResume")
-    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+        savedInstanceState: android.os.Bundle?
+    ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        Log.d("homefragment", "onCreateView")
 
         binding.bannerMoreBtn.setOnClickListener {
             val shelterFragment = ShelterFragment()
@@ -64,101 +53,116 @@ class HomeFragment : Fragment() {
             transaction.commit()
         }
 
+        binding.homeRefresh.setOnRefreshListener {
+            requestHomeItems(FULL_HOME_COUNT, true)
+        }
+
         recyclerView = binding.homeRc
         recyclerView.layoutManager = LinearLayoutManager(context)
+        recyclerView.setHasFixedSize(true)
 
         adapter = HomeAdapter(mContext)
         recyclerView.adapter = adapter
+        adapter.itemClick = object : HomeAdapter.ItemClick {
+            override fun onClick(position: Int) {
+                val selectedItem = resItems.getOrNull(position) ?: return
+                passData?.pass(selectedItem)
+            }
+        }
 
-        adapter.clearItem()
-        resItems.clear()
-        homeResult()
+        if (isHomeLoaded && resItems.isNotEmpty()) {
+            syncLikedState()
+            adapter.addItem(resItems)
+        } else {
+            adapter.clearItem()
+            resItems.clear()
+            requestHomeItems(currentHomeCount, false)
+        }
         return binding.root
     }
 
-    private fun homeResult() {
-        Log.d("homeFragment", "homeResult start")
+    private fun requestHomeItems(numOfRows: Int, fromUserRefresh: Boolean) {
+        if (fromUserRefresh) {
+            _binding?.homeRefresh?.isRefreshing = true
+        }
 
-        apiService.homeDang(
+        homeCall?.cancel()
+        homeCall = apiService.homeDang(
             serviceKey = Util.KEY,
-            numOfRows = 50,
+            numOfRows = numOfRows,
             pageNo = 1,
             type = "json",
             upkind = 417000
-        ).enqueue(object : Callback<HomeData?> {
+        )
 
+        homeCall?.enqueue(object : Callback<HomeData?> {
             override fun onResponse(call: Call<HomeData?>, response: Response<HomeData?>) {
-                Log.d("homeFragment", "response.code = ${response.code()}")
-                Log.d("homeFragment", "response.isSuccessful = ${response.isSuccessful}")
-                Log.d("homeFragment", "raw body = ${response.body()}")
+                _binding?.homeRefresh?.isRefreshing = false
+                if (!response.isSuccessful) {
+                    Log.e("homeFragment", "Home API error: ${response.code()}")
+                    return
+                }
 
-                if (response.isSuccessful) {
-                    val homeData = response.body()
-                    Log.d("homeFragment", "header = ${homeData?.response?.header}")
-                    Log.d("homeFragment", "body = ${homeData?.response?.body}")
+                val itemList = response.body()?.response?.body?.items?.item.orEmpty()
+                val likePopfiles = PrefManager.getLikeItem(mContext)
+                    .mapNotNull { it.popfile }
+                    .toHashSet()
 
-                    val itemList = homeData?.response?.body?.items?.item
-                    Log.d("homeFragment", "itemList null? = ${itemList == null}")
-                    Log.d("homeFragment", "itemList size = ${itemList?.size}")
-
-                    val likeItems = PrefManager.getLikeItem(mContext)
-                    Log.d("homeFragment", "likeItems.size = ${likeItems.size}")
-
-                    resItems.clear()
-
-                    itemList?.forEach { item ->
-                        Log.d("homeFragment", "item = $item")
-
-                        val popfile = item.popfile1
-                        val kindCd = item.kindFullNm ?: item.kindNm ?: item.kindCd
-                        val age = item.age
-                        val careAddr = item.careAddr
-                        val processState = item.processState
-                        val sexCd = item.sexCd
-                        val neuterYn = item.neuterYn
-                        val weight = item.weight
-                        val specialMark = item.specialMark
-                        val noticeNo = item.noticeNo
-                        val happenPlace = item.happenPlace
-                        val colorCd = item.colorCd
-                        val careNm = item.careNm
-                        val careTel = item.careTel
-
-                        val isLike = likeItems.find { it.popfile == item.popfile1 } != null
-
-                        resItems.add(
-                            SearchDogData(
-                                popfile,
-                                kindCd,
-                                age,
-                                careAddr,
-                                processState,
-                                sexCd,
-                                neuterYn,
-                                weight,
-                                specialMark,
-                                noticeNo,
-                                happenPlace,
-                                colorCd,
-                                careNm,
-                                careTel,
-                                isLike
-                            )
+                resItems.clear()
+                resItems.addAll(
+                    itemList.map { item ->
+                        SearchDogData(
+                            item.popfile1,
+                            item.kindFullNm ?: item.kindNm ?: item.kindCd,
+                            item.age,
+                            item.careAddr,
+                            item.processState,
+                            item.sexCd,
+                            item.neuterYn,
+                            item.weight,
+                            item.specialMark,
+                            item.noticeNo,
+                            item.happenPlace,
+                            item.colorCd,
+                            item.careNm,
+                            item.careTel,
+                            likePopfiles.contains(item.popfile1)
                         )
                     }
+                )
+                currentHomeCount = numOfRows
+                isHomeLoaded = true
 
-                    Log.d("homeFragment", "resItems.size = ${resItems.size}")
+                if (_binding != null && ::adapter.isInitialized) {
                     adapter.addItem(resItems)
-                } else {
-                    Log.e("homeFragment", "error code = ${response.code()}")
-                    Log.e("homeFragment", "error body = ${response.errorBody()?.string()}")
                 }
             }
 
             override fun onFailure(call: Call<HomeData?>, t: Throwable) {
-                Log.e("homeFragment", "API Error: ${t.message}", t)
+                _binding?.homeRefresh?.isRefreshing = false
+                if (call.isCanceled) {
+                    return
+                }
+                Log.e("homeFragment", "Home API failure: ${t.message}", t)
             }
         })
+    }
+
+    private fun syncLikedState() {
+        val likePopfiles = PrefManager.getLikeItem(mContext)
+            .mapNotNull { it.popfile }
+            .toHashSet()
+        resItems.forEach { item ->
+            item.isLiked = likePopfiles.contains(item.popfile)
+        }
+    }
+
+    interface DogData {
+        fun pass(list: SearchDogData)
+    }
+
+    fun dogData(data: DogData) {
+        passData = data
     }
 
     override fun onDestroyView() {
@@ -166,4 +170,8 @@ class HomeFragment : Fragment() {
         _binding = null
     }
 
+    companion object {
+        private const val INITIAL_HOME_COUNT = 20
+        private const val FULL_HOME_COUNT = 50
+    }
 }
