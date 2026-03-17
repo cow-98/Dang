@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
@@ -56,6 +57,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         private const val DEFAULT_SIZE_LABEL = "\uD06C\uAE30"
         private const val RECENT_SEARCH_LABEL = "\uCD5C\uADFC \uAC80\uC0C9\uC5B4"
         private const val SEARCH_HINT = "\uAC15\uC544\uC9C0 \uD488\uC885\uBA85\uC744 \uC785\uB825\uD574 \uC8FC\uC138\uC694"
+        private const val RECENT_CLEAR_ALL_LABEL = "\uC804\uCCB4 \uC0AD\uC81C"
         private const val SEARCH_GUIDE_MESSAGE = "\uAC80\uC0C9\uD560 \uD488\uC885\uBA85\uC744 \uC785\uB825\uD558\uAC70\uB098 \uBAA9\uB85D\uC5D0\uC11C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694."
         private const val MALE_LABEL = "\uC218\uCEF7"
         private const val FEMALE_LABEL = "\uC554\uCEF7"
@@ -71,18 +73,21 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         viewModel()
         setupSearchUi()
 
-        recentViewModel.recentReset()
-        context?.let { recentViewModel.getListFromPreferences(it) }
-            ?.let { recentViewModel.saveRecent(it) }
+        context?.let { recentViewModel.setRecentList(recentViewModel.getListFromPreferences(it)) }
 
         binding.searchEdit.setOnClickListener {
             typeOne = 1
-            binding.recent.visibility = View.VISIBLE
-            binding.searchTag.visibility = View.INVISIBLE
+            showRecentSection()
+        }
+
+        binding.recentClearAll.setOnClickListener {
+            recentViewModel.clearAll()
         }
 
         binding.searchBtn.setOnClickListener {
-            performSearch()
+            if (performSearch()) {
+                hideKeyboard()
+            }
         }
 
         binding.searchAge.setOnClickListener {
@@ -108,6 +113,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             override fun onTextViewClick(position: Int) {
                 val edit = recentViewModel.editText(position)
                 binding.searchEdit.setText(edit)
+                binding.searchEdit.setSelection(edit.length)
             }
         }
 
@@ -127,6 +133,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
 
     private fun setupSearchUi() {
         binding.recent.text = RECENT_SEARCH_LABEL
+        binding.recentClearAll.text = RECENT_CLEAR_ALL_LABEL
         binding.searchEdit.hint = SEARCH_HINT
         binding.searchEdit.inputType = InputType.TYPE_CLASS_TEXT
         binding.searchEdit.imeOptions = EditorInfo.IME_ACTION_SEARCH
@@ -139,7 +146,9 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 actionId == EditorInfo.IME_ACTION_DONE ||
                 isEnterKey
             ) {
-                performSearch()
+                if (performSearch()) {
+                    hideKeyboard()
+                }
                 true
             } else {
                 false
@@ -147,22 +156,41 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         }
     }
 
-    private fun performSearch() {
-        typeOne = 0
-        binding.recent.visibility = View.INVISIBLE
-        binding.searchTag.visibility = View.VISIBLE
-        resetFilterLabels()
+    private fun showRecentSection() {
+        binding.recentHeader.visibility = View.VISIBLE
+        binding.searchTag.visibility = View.GONE
+        searchAdapter.recentData(recentViewModel.recentList.value.orEmpty())
+        updateRecentControls(recentViewModel.recentList.value.orEmpty())
+    }
 
+    private fun showFilterSection() {
+        binding.recentHeader.visibility = View.GONE
+        binding.recentClearAll.visibility = View.GONE
+        binding.searchTag.visibility = View.VISIBLE
+    }
+
+    private fun updateRecentControls(list: List<String>) {
+        val isRecentMode = typeOne == 1
+        binding.recentHeader.visibility = if (isRecentMode) View.VISIBLE else View.GONE
+        binding.recentClearAll.visibility = if (isRecentMode && list.isNotEmpty()) View.VISIBLE else View.GONE
+    }
+
+    private fun performSearch(): Boolean {
         dogKind = binding.searchEdit.text.toString().trim()
         val selectedKindNumber = hashMap[dogKind]
         if (dogKind.isEmpty() || selectedKindNumber.isNullOrEmpty()) {
             toast(SEARCH_GUIDE_MESSAGE)
-            return
+            return false
         }
+
+        typeOne = 0
+        showFilterSection()
+        resetFilterLabels()
 
         searchViewModel.clearSearches()
         searchItem.clear()
         searchData(selectedKindNumber)
+        return true
     }
 
     private fun resetFilterLabels() {
@@ -184,18 +212,16 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         searchViewModel = ViewModelProvider(this)[SearchViewModel::class.java]
 
         searchViewModel.searchesList.observe(viewLifecycleOwner, Observer { list ->
-            if (list != null) {
-                searchAdapter.searchesData(list)
-            }
+            searchAdapter.searchesData(list.orEmpty())
         })
 
         recentViewModel = ViewModelProvider(this)[RecentViewModel::class.java]
 
         recentViewModel.recentList.observe(viewLifecycleOwner, Observer { list ->
-            if (list != null) {
-                searchAdapter.recentData(list)
-                context?.let { recentViewModel.saveListToPreferences(it) }
-            }
+            val recentKeywords = list.orEmpty()
+            searchAdapter.recentData(recentKeywords)
+            context?.let { recentViewModel.saveListToPreferences(it) }
+            updateRecentControls(recentKeywords)
         })
     }
 
@@ -444,6 +470,12 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 Log.e(Constants.TestTAG, "kindData failure: ${t.message}", t)
             }
         })
+    }
+
+    private fun hideKeyboard() {
+        binding.searchEdit.clearFocus()
+        requireContext().getSystemService(InputMethodManager::class.java)
+            ?.hideSoftInputFromWindow(binding.searchEdit.windowToken, 0)
     }
 
     private fun toast(message: String) {

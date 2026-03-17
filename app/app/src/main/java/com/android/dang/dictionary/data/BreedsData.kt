@@ -1,6 +1,6 @@
 package com.android.dang.dictionary.data
 
-class BreedsData : ArrayList<BreedsData.BreedsDataItem>(){
+class BreedsData : ArrayList<BreedsData.BreedsDataItem>() {
     data class BreedsDataItem(
         var bred_for: String?,
         var breed_group: String?,
@@ -14,16 +14,24 @@ class BreedsData : ArrayList<BreedsData.BreedsDataItem>(){
         var origin: String?,
         var reference_image_id: String?,
         var temperament: String?,
-        var weight: Weight?
+        var weight: Weight?,
+        var image: Image?
     ) {
         data class Height(
             var imperial: String?,
             var metric: String?
         )
-    
+
         data class Weight(
             var imperial: String?,
             var metric: String?
+        )
+
+        data class Image(
+            var id: String?,
+            var url: String?,
+            var width: Int?,
+            var height: Int?
         )
     }
 }

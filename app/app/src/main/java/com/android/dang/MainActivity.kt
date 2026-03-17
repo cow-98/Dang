@@ -32,6 +32,10 @@ class MainActivity : AppCompatActivity(), SearchFragment.DogData, HomeFragment.D
         val likeFragment = LikeFragment()
         val dictionaryFragment = DictionaryFragment()
 
+        binding.navBar.setItemActiveIndicatorEnabled(false)
+        binding.navBar.itemActiveIndicatorColor = android.content.res.ColorStateList.valueOf(android.graphics.Color.TRANSPARENT)
+        binding.navBar.itemRippleColor = android.content.res.ColorStateList.valueOf(android.graphics.Color.TRANSPARENT)
+        binding.navBar.itemBackground = null
 
         switchFragment(homeFragment)
         binding.icBack.visibility = View.INVISIBLE

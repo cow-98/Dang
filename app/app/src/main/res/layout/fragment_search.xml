@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_marginStart="15dp"
-    android:layout_marginEnd="15dp"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_marginEnd="15dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/search_dog_kind"
@@ -14,107 +14,145 @@
         android:layout_marginTop="15dp"
         android:background="@drawable/background_search"
         app:layout_constraintTop_toTopOf="parent">
+
         <AutoCompleteTextView
             android:id="@+id/search_edit"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
             android:background="@android:color/transparent"
             android:fontFamily="@font/hakgyoansimwooju"
-            tools:ignore="RtlCompat"
-            android:hint="강아지의 품종을 입력하세요" />
+            android:paddingStart="16dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="12dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/search_btn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="RtlCompat" />
+
         <ImageView
             android:id="@+id/search_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
             android:padding="10dp"
-            android:src="@drawable/icon_search" />
+            android:src="@drawable/icon_search"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <TextView
-        android:id="@+id/recent"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="최근 검색어"
-        android:visibility="visible"
-        android:fontFamily="@font/hakgyoansimwooju"
-        android:textColor="@color/basic"
-        app:layout_constraintBottom_toTopOf="@+id/rcv_search_list"
-        app:layout_constraintTop_toBottomOf="@+id/search_dog_kind" />
     <LinearLayout
-        android:id="@+id/search_tag"
+        android:id="@+id/search_controls_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:visibility="invisible"
-        app:layout_constraintTop_toBottomOf="@id/search_dog_kind"
-        app:layout_constraintBottom_toTopOf="@id/rcv_search_list" >
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@id/search_dog_kind">
 
-        <LinearLayout
-            android:id="@+id/search_age"
-            android:layout_width="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/recent_header"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="5dp"
-            android:background="@drawable/background_search_tag"
-            android:orientation="horizontal">
+            android:visibility="visible">
+
             <TextView
-                android:id="@+id/text_age"
+                android:id="@+id/recent"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/hakgyoansimwooju"
+                android:textColor="@color/basic"
+                android:textSize="15sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/recent_clear_all"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/recent_clear_all"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/hakgyoansimwooju"
-                android:textSize="15sp"
-                android:textColor="@color/basic"
-                android:text="나이"/>
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/icon_arrow_down"/>
-        </LinearLayout>
+                android:textColor="@color/btn_gray"
+                android:textSize="13sp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <LinearLayout
-            android:id="@+id/search_gender"
-            android:layout_width="wrap_content"
+            android:id="@+id/search_tag"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="5dp"
-            android:background="@drawable/background_search_tag"
-            android:orientation="horizontal">
-            <TextView
-                android:id="@+id/text_gender"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/hakgyoansimwooju"
-                android:textSize="15sp"
-                android:textColor="@color/basic"
-                android:text="성별"/>
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/icon_arrow_down"/>
-        </LinearLayout>
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal"
+            android:visibility="gone">
 
-        <LinearLayout
-            android:id="@+id/search_size"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/background_search_tag"
-            android:orientation="horizontal">
-            <TextView
-                android:id="@+id/text_size"
+            <LinearLayout
+                android:id="@+id/search_age"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/hakgyoansimwooju"
-                android:textSize="15sp"
-                android:textColor="@color/basic"
-                android:text="크기"/>
-            <ImageView
+                android:layout_marginEnd="5dp"
+                android:background="@drawable/background_search_tag"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/text_age"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/hakgyoansimwooju"
+                    android:textColor="@color/basic"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/icon_arrow_down" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/search_gender"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/icon_arrow_down"/>
+                android:layout_marginEnd="5dp"
+                android:background="@drawable/background_search_tag"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/text_gender"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/hakgyoansimwooju"
+                    android:textColor="@color/basic"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/icon_arrow_down" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/search_size"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/background_search_tag"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/text_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/hakgyoansimwooju"
+                    android:textColor="@color/basic"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/icon_arrow_down" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
@@ -123,9 +161,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="10dp"
-        app:layout_constraintTop_toBottomOf="@id/search_tag"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:listitem="@layout/item_common_detail"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/search_controls_container"
+        tools:listitem="@layout/item_common_detail" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

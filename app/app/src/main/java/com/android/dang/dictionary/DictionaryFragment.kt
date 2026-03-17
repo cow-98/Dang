@@ -9,7 +9,9 @@ import android.widget.AdapterView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.android.dang.R
 import com.android.dang.databinding.FragmentDictionaryBinding
+import com.android.dang.dictionary.data.BreedsData
 import com.android.dang.dictionary.data.BreedsSpinnerData
 import com.android.dang.dictionary.retrofit.NetWorkClient
 import kotlinx.coroutines.launch
@@ -20,9 +22,9 @@ class DictionaryFragment : Fragment() {
     private var _binding: FragmentDictionaryBinding? = null
     private val binding: FragmentDictionaryBinding
         get() = _binding!!
-    private var mBreedList = arrayListOf<BreedsSpinnerData>()
+    private val breedOptions = arrayListOf<BreedsSpinnerData>()
     private val dictionaryListAdapter by lazy {
-        DictionaryListAdapter()
+        DictionaryListAdapter(::openBreedDetail)
     }
 
     override fun onCreateView(
@@ -55,45 +57,73 @@ class DictionaryFragment : Fragment() {
                     return@launch
                 }
 
-                mBreedList.clear()
-                mBreedList.add(BreedsSpinnerData(0, "\uC804\uCCB4"))
-                mBreedList.addAll(
-                    breedsDatas.map { breedItem ->
-                        BreedsSpinnerData(breedItem.id, breedItem.name)
-                    }
-                )
-
-                binding.dictionarySpinner.adapter =
-                    BreedsSpinnerAdapter(requireContext(), mBreedList)
-                binding.dictionarySpinner.onItemSelectedListener =
-                    object : AdapterView.OnItemSelectedListener {
-                        override fun onItemSelected(
-                            parent: AdapterView<*>?,
-                            selectedView: View?,
-                            position: Int,
-                            id: Long
-                        ) {
-                            if (position == 0) {
-                                (binding.dictionaryRecyclerView.adapter as DictionaryListAdapter)
-                                    .addItems(breedsDatas, true)
-                                return
-                            }
-
-                            val breedId = mBreedList[position].id
-                            breedsDatas.find { it.id == breedId }?.let {
-                                (binding.dictionaryRecyclerView.adapter as DictionaryListAdapter)
-                                    .addItems(arrayListOf(it), true)
-                            }
-                        }
-
-                        override fun onNothingSelected(parent: AdapterView<*>?) = Unit
-                    }
+                dictionaryListAdapter.addItems(breedsDatas, true)
+                bindSpinner(breedsDatas)
             } catch (e: HttpException) {
                 Log.e("dictionaryFragment", "Dictionary API error: ${e.code()}", e)
             } catch (e: Exception) {
                 Log.e("dictionaryFragment", "Dictionary load failed: ${e.message}", e)
             }
         }
+    }
+
+    private fun bindSpinner(breedsDatas: BreedsData) {
+        breedOptions.clear()
+        breedOptions.add(BreedsSpinnerData(0, "\uC804\uCCB4"))
+        breedOptions.addAll(
+            breedsDatas.map { breedItem ->
+                BreedsSpinnerData(
+                    breedItem.id,
+                    BreedNameLocalizer.localize(requireContext(), breedItem.name)
+                )
+            }
+        )
+
+        binding.dictionarySpinner.adapter =
+            BreedsSpinnerAdapter(requireContext(), breedOptions)
+        binding.dictionarySpinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    selectedView: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    if (position == 0) {
+                        dictionaryListAdapter.addItems(breedsDatas, true)
+                        return
+                    }
+
+                    val breedId = breedOptions[position].id
+                    breedsDatas.find { it.id == breedId }?.let {
+                        dictionaryListAdapter.addItems(listOf(it), true)
+                    }
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+            }
+    }
+
+    private fun openBreedDetail(item: BreedsData.BreedsDataItem) {
+        if (!isAdded) {
+            return
+        }
+
+        val displayName = BreedNameLocalizer.localize(requireContext(), item.name)
+        parentFragmentManager.beginTransaction()
+            .replace(
+                R.id.fragment_view,
+                DictionaryDetailFragment.newInstance(
+                    displayName = displayName,
+                    englishName = item.name.orEmpty(),
+                    imageUrl = DictionaryBreedUi.imageUrl(item),
+                    info = DictionaryBreedUi.detailInfo(requireContext(), item),
+                    description = DictionaryBreedUi.description(requireContext(), item),
+                    history = DictionaryBreedUi.history(requireContext(), item)
+                )
+            )
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun onDestroyView() {

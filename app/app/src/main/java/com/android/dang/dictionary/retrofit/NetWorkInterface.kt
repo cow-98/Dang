@@ -10,13 +10,13 @@ import retrofit2.http.QueryMap
 interface NetWorkInterface {
     @GET("/v1/breeds")
     suspend fun getBreeds(
-        @Header("Authorization") token: String?,
+        @Header("x-api-key") token: String?,
         @QueryMap param: HashMap<String, Int>
     ): BreedsData
 
 //    @GET("/v1/breeds/{index}")
 //    suspend fun getBreed(
-//        @Header("Authorization") token: String?,
+//        @Header("x-api-key") token: String?,
 //        @Path("index") index:Int
 //    ): BreedItem
 

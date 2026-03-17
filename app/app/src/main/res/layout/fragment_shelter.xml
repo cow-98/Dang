@@ -1,118 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_marginStart="15dp"
-    android:layout_marginEnd="15dp">
-    <TextView
-        android:id="@+id/search_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="10dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:text="검색하실 위치를 선택해주세요"
-        android:textSize="15sp"
-        android:fontFamily="@font/hakgyoansimwooju"/>
-    <TextView
-        android:id="@+id/select_location_main"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/background_edittext"
-        app:layout_constraintTop_toBottomOf="@id/search_text"
-        android:layout_marginTop="5dp"
-        android:text="서울특별시"
-        android:textSize="15sp"
-        android:fontFamily="@font/hakgyoansimwooju"/>
+    android:paddingStart="20dp"
+    android:paddingTop="20dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="24dp">
 
     <TextView
-        android:id="@+id/select_location_detail"
-        android:layout_width="match_parent"
+        android:id="@+id/shelter_notice_title"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/background_edittext"
-        app:layout_constraintTop_toBottomOf="@id/select_location_main"
-        android:layout_marginTop="5dp"
-        android:text=""
-        android:textSize="15sp"
-        android:fontFamily="@font/hakgyoansimwooju"/>
+        android:fontFamily="@font/kcc_ganpan"
+        android:text="보호소 지도 안내"
+        android:textColor="@color/basic"
+        android:textSize="26sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/shelter_notice_subtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:fontFamily="@font/hakgyoansimwooju"
+        android:lineSpacingExtra="4dp"
+        android:text="현재 보호소 지도 기능은 외부 지도 인증 이슈로 인해 임시 비활성화되어 있습니다."
+        android:textColor="@color/basic"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/shelter_notice_title" />
 
     <LinearLayout
-        android:id="@+id/map"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="10dp"
-        android:background="@color/black"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@id/shelter_info"
-        app:layout_constraintTop_toBottomOf="@id/select_location_detail"
-        app:layout_constraintVertical_bias="1.0"
-        tools:layout_editor_absoluteX="0dp" >
+        android:id="@+id/shelter_notice_card"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/background_edittext"
+        android:orientation="vertical"
+        android:padding="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/shelter_notice_subtitle">
 
-        <com.kakao.vectormap.MapView
-            android:id="@+id/map_view"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/kcc_ganpan"
+            android:text="현재 상태"
+            android:textColor="@color/basic"
+            android:textSize="18sp" />
+
+        <TextView
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/hakgyoansimwooju"
+            android:lineSpacingExtra="6dp"
+            android:text="- 카카오맵 인증 키를 확인할 수 없어 지도를 표시하지 않습니다.&#10;- 검은 화면 대신 안내 화면으로 대체해 앱 사용 흐름이 끊기지 않도록 처리했습니다.&#10;- 지도 기능은 키 권한이 확보되면 다시 연결할 수 있습니다."
+            android:textColor="@color/basic"
+            android:textSize="15sp" />
     </LinearLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/shelter_info"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/shelter_notice_qa_card"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:layout_marginTop="16dp"
+        android:background="@drawable/background_edittext"
+        android:orientation="vertical"
+        android:padding="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/shelter_notice_card">
+
         <TextView
-            android:id="@+id/shelter_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             android:fontFamily="@font/kcc_ganpan"
-            android:textSize="16sp"
-            android:text=""/>
+            android:text="QA 관점 처리"
+            android:textColor="@color/basic"
+            android:textSize="18sp" />
+
         <TextView
-            android:id="@+id/shelter_location"
-            android:layout_width="280dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:ellipsize="end"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/shelter_name"
-            app:layout_constraintBottom_toTopOf="@id/shelter_phone"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="12dp"
             android:fontFamily="@font/hakgyoansimwooju"
-            android:textSize="15sp"
-            android:text=""/>
-        <TextView
-            android:id="@+id/shelter_phone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:ellipsize="end"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:fontFamily="@font/hakgyoansimwooju"
-            android:textSize="15sp"
-            android:text=""/>
-        <TextView
-            android:id="@+id/shelter_select_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/background_btn_red"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:fontFamily="@font/kcc_ganpan"
-            android:textColor="@color/white"
-            android:textSize="15sp"
-            android:text="선택하기"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            android:lineSpacingExtra="6dp"
+            android:text="외부 인증 의존성으로 해결할 수 없는 기능은 원인을 명확히 분리하고, 대체 UI를 제공해 나머지 핵심 기능 검증이 가능하도록 유지했습니다."
+            android:textColor="@color/basic"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/shelter_notice_footer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:fontFamily="@font/hakgyoansimwooju"
+        android:lineSpacingExtra="4dp"
+        android:text="복구 조건: 카카오 개발자 콘솔에서 현재 앱 패키지와 키 권한이 확인되면 지도 기능을 재연결할 수 있습니다."
+        android:textColor="@color/underline"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/shelter_notice_qa_card" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

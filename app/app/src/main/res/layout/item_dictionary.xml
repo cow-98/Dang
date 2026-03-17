@@ -1,80 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="160dp"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/background_item"
+    android:clickable="true"
+    android:elevation="8dp"
+    android:focusable="true"
+    android:padding="12dp">
 
-<layout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cd_ditionary_item"
+        android:layout_width="120dp"
+        android:layout_height="0dp"
+        app:cardCornerRadius="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-    <data>
-        <variable
-            name="item"
-            type="com.android.dang.dictionary.data.BreedsData.BreedsDataItem" />
-    </data>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/background_item"
-        android:elevation="8dp">
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cd_ditionary_item"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:cardCornerRadius="8dp">
         <ImageView
             android:id="@+id/dog_img"
-            android:layout_width="120dp"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            imgRes="@{item}" />
-        </androidx.cardview.widget.CardView>
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:padding="15dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toEndOf="@id/cd_ditionary_item"
-            >
+            android:contentDescription="@null"
+            android:scaleType="centerCrop" />
+    </androidx.cardview.widget.CardView>
 
-            <TextView
-                android:id="@+id/dog_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/kcc_ganpan"
-                android:text="@{item.name}"
-                android:textColor="@color/basic"
-                android:textSize="16sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
+    <TextView
+        android:id="@+id/dog_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:fontFamily="@font/kcc_ganpan"
+        android:textColor="@color/basic"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/cd_ditionary_item"
+        app:layout_constraintTop_toTopOf="parent" />
 
-            <View
-                android:id="@+id/view"
-                android:layout_width="match_parent"
-                android:layout_height="2dp"
-                android:background="@color/underline"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/dog_name"/>
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="6dp"
+        android:background="@color/underline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/cd_ditionary_item"
+        app:layout_constraintTop_toBottomOf="@id/dog_name" />
 
-            <TextView
-                android:id="@+id/dog_info_dictionary"
-                dicItemDes="@{item}"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/hakgyoansimwooju"
-                android:layout_marginTop="10dp"
-                android:textColor="@color/basic"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/view"
-                android:lines="6"/>
+    <TextView
+        android:id="@+id/dog_info_dictionary"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="10dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/hakgyoansimwooju"
+        android:maxLines="4"
+        android:textColor="@color/basic"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/cd_ditionary_item"
+        app:layout_constraintTop_toBottomOf="@id/divider" />
 
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</layout>
+</androidx.constraintlayout.widget.ConstraintLayout>

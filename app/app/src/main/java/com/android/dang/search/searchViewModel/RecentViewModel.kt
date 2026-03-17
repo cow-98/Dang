@@ -6,54 +6,71 @@ import androidx.lifecycle.ViewModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
+class RecentViewModel : ViewModel() {
+    val recentList = MutableLiveData<List<String>>(emptyList())
 
-class RecentViewModel: ViewModel() {
-    val recentList = MutableLiveData<List<String>?>()
-
-
-    fun saveRecent(list : List<String>){
-        val currentList = recentList.value?.toMutableList() ?: mutableListOf()
-        currentList.addAll(list)
-        recentList.value = currentList
-    }
-    fun recentAdd(text: String){
-        val currentList = recentList.value?.toMutableList() ?: mutableListOf()
-        currentList.add(text)
-        currentList.reverse()
-        recentList.value = currentList
+    fun setRecentList(list: List<String>) {
+        recentList.value = normalize(list)
     }
 
-    fun recentRemove(position: Int){
-        val currentList = recentList.value?.toMutableList() ?: mutableListOf()
+    fun recentAdd(text: String) {
+        val keyword = text.trim()
+        if (keyword.isBlank()) {
+            return
+        }
+
+        val currentList = recentList.value.orEmpty().toMutableList()
+        currentList.removeAll { it.equals(keyword, ignoreCase = true) }
+        currentList.add(0, keyword)
+        recentList.value = normalize(currentList)
+    }
+
+    fun recentRemove(position: Int) {
+        val currentList = recentList.value.orEmpty().toMutableList()
+        if (position !in currentList.indices) {
+            return
+        }
         currentList.removeAt(position)
         recentList.value = currentList
     }
 
     fun editText(position: Int): String {
-        val currentList = recentList.value?.toMutableList() ?: mutableListOf()
-        return currentList[position]
+        return recentList.value.orEmpty().getOrElse(position) { "" }
     }
 
-    fun recentReset(){
-        recentList.value = null
-
+    fun clearAll() {
+        recentList.value = emptyList()
     }
 
-    fun saveListToPreferences(context: Context){
-        val list = recentList.value ?: mutableListOf()
+    fun saveListToPreferences(context: Context) {
         val sharedPreferences = context.getSharedPreferences("recentWord", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
         val gson = Gson()
-        val json = gson.toJson(list)
+        val json = gson.toJson(recentList.value.orEmpty())
         editor.putString("recentWord", json)
         editor.apply()
     }
 
-    fun getListFromPreferences(context: Context): List<String>{
+    fun getListFromPreferences(context: Context): List<String> {
         val sharedPreferences = context.getSharedPreferences("recentWord", Context.MODE_PRIVATE)
         val gson = Gson()
         val json = sharedPreferences.getString("recentWord", null)
         val type = object : TypeToken<List<String>>() {}.type
-        return gson.fromJson(json, type) ?: listOf()
+        val list = gson.fromJson<List<String>>(json, type) ?: emptyList()
+        return normalize(list)
+    }
+
+    private fun normalize(source: List<String>): List<String> {
+        val normalized = mutableListOf<String>()
+        source.forEach { item ->
+            val keyword = item.trim()
+            if (keyword.isBlank()) {
+                return@forEach
+            }
+            if (normalized.none { it.equals(keyword, ignoreCase = true) }) {
+                normalized += keyword
+            }
+        }
+        return normalized.take(20)
     }
 }
