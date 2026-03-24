@@ -1,100 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_marginStart="15dp"
-    android:layout_marginEnd="15dp"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_marginEnd="15dp">
+
     <ImageView
         android:id="@+id/dog_img"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="265dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="15dp"
-        android:background="@drawable/background_item_detail_img_radius"/>
+        android:background="@drawable/background_item_detail_img_radius"
+        android:scaleType="centerCrop"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/dog_name"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/dog_img"
-        app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="10dp"
         android:fontFamily="@font/kcc_ganpan"
+        android:text=""
+        android:textColor="@color/basic"
         android:textSize="24sp"
-        android:text="닥스훈트"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dog_img" />
+
     <TextView
         android:id="@+id/dog_id"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/dog_name"
-        app:layout_constraintStart_toStartOf="parent"
         android:fontFamily="@font/hakgyoansimwooju"
+        android:text=""
         android:textColor="@color/btn_gray"
         android:textSize="15sp"
-        android:text="서울-강북구-2023=1234"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dog_name" />
 
-    <LinearLayout
+    <View
         android:id="@+id/division"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="1dp"
-        app:layout_constraintTop_toBottomOf="@id/dog_id"
         android:layout_marginTop="10dp"
         android:background="#747474"
-        android:orientation="vertical" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dog_id" />
 
-    <TextView
-        android:id="@+id/dog_info"
-        android:layout_width="match_parent"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/dog_info_scroll"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="10dp"
-        android:fontFamily="@font/hakgyoansimwooju"
-        android:textSize="17sp"
-        android:textColor="@color/basic"
-        android:text="# 접수일시 - 2023년 10월 12일
-                    \n# 발견장소 - 강북구 대학가 인근\n# 성별 - 수컷
-                    \n\n# 나이 - 2017(년생)
-                    \n# 색상 - 갈색 + 검정색
-                    \n# 체중 - 6(kg)
-                    \n\n\n특징 - 순한 성격,사람 손을 많이 탐,유실 유기견 추정
-                    \n\n\n보호센터명 - 서울유기동물입양센터
-                    \n보호소전화번호 - 02-6958-6224"
+        android:fillViewport="true"
         app:layout_constraintBottom_toTopOf="@id/shelter_call"
-        app:layout_constraintTop_toBottomOf="@id/division" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/division">
+
+        <TextView
+            android:id="@+id/dog_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/hakgyoansimwooju"
+            android:lineSpacingExtra="6dp"
+            android:text=""
+            android:textColor="@color/basic"
+            android:textSize="17sp" />
+    </androidx.core.widget.NestedScrollView>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/shelter_call"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="15dp">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
         <ImageView
             android:id="@+id/btn_like"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
             android:padding="10dp"
-            android:src="@drawable/icon_heart_filled"/>
+            android:src="@drawable/icon_heart_empty"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <TextView
+            android:id="@+id/btn_shelter_call"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            app:layout_constraintStart_toEndOf="@id/btn_like"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
             android:layout_marginStart="10dp"
             android:background="@drawable/background_btn_red_no_padding"
-            android:textColor="@color/white"
             android:fontFamily="@font/kcc_ganpan"
+            android:gravity="center"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:text="보호소 연락하기"
+            android:textColor="@color/white"
             android:textSize="15sp"
-            android:textAlignment="center"
-            android:text="보호소 연락하기"/>
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/btn_like"
+            app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
