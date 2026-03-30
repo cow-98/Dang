@@ -14,6 +14,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -30,6 +31,7 @@ import com.android.dang.home.retrofit.Util
 import com.android.dang.search.searchItemModel.SearchDogData
 import com.android.dang.search.searchViewModel.RecentViewModel
 import com.android.dang.search.searchViewModel.SearchViewModel
+import com.android.dang.util.PrefManager
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -46,11 +48,22 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     private var searchItem = mutableListOf<SearchDogData>()
     private var hashMap = HashMap<String, String>()
     private var autoWordList = mutableListOf<String>()
+    private lateinit var autoCompleteAdapter: ArrayAdapter<String>
     private lateinit var searchAdapter: SearchAdapter
     private val year = LocalDate.now().year
     private var dogKind = ""
     private lateinit var passData: DogData
+    private val backPressedCallback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            if (handleSystemBackPressed()) {
+                return
+            }
 
+            isEnabled = false
+            requireActivity().onBackPressedDispatcher.onBackPressed()
+            isEnabled = true
+        }
+    }
     companion object {
         private const val DEFAULT_AGE_LABEL = "\uB098\uC774"
         private const val DEFAULT_GENDER_LABEL = "\uC131\uBCC4"
@@ -72,7 +85,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         initView()
         viewModel()
         setupSearchUi()
-
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backPressedCallback)
         context?.let { recentViewModel.setRecentList(recentViewModel.getListFromPreferences(it)) }
 
         binding.searchEdit.setOnClickListener {
@@ -117,13 +130,12 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             }
         }
 
-        val autoCompleteTextView = binding.searchEdit
-        val adapter = ArrayAdapter(
+        autoCompleteAdapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_dropdown_item_1line,
             autoWordList
         )
-        autoCompleteTextView.setAdapter(adapter)
+        binding.searchEdit.setAdapter(autoCompleteAdapter)
     }
 
     override fun onDestroyView() {
@@ -138,6 +150,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         binding.searchEdit.inputType = InputType.TYPE_CLASS_TEXT
         binding.searchEdit.imeOptions = EditorInfo.IME_ACTION_SEARCH
         binding.searchEdit.setSingleLine()
+        binding.searchEdit.threshold = 1
         resetFilterLabels()
         binding.searchEdit.setOnEditorActionListener { _, actionId, event ->
             val isEnterKey = event?.action == KeyEvent.ACTION_DOWN &&
@@ -193,6 +206,29 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         return true
     }
 
+    fun handleSystemBackPressed(): Boolean {
+        if (_binding == null || !isShowingSearchResults()) {
+            return false
+        }
+
+        restoreInitialSearchState()
+        return true
+    }
+
+    private fun isShowingSearchResults(): Boolean {
+        return binding.searchTag.visibility == View.VISIBLE
+    }
+
+    private fun restoreInitialSearchState() {
+        typeOne = 1
+        searchViewModel.clearSearches()
+        searchViewModel.resetAllFilters()
+        searchItem.clear()
+        resetFilterLabels()
+        showRecentSection()
+        hideKeyboard()
+    }
+
     private fun resetFilterLabels() {
         binding.textAge.text = DEFAULT_AGE_LABEL
         binding.textGender.text = DEFAULT_GENDER_LABEL
@@ -227,6 +263,10 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
 
     private fun recentAdd(text: String) {
         recentViewModel.recentAdd(text)
+    }
+
+    private fun normalizeDogKindName(name: String): String {
+        return name.replace(Regex("^\\[\uAC1C\\]\\s*"), "").trim()
     }
 
     @SuppressLint("ResourceType")
@@ -400,11 +440,14 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 if (response.isSuccessful) {
                     val itemList = response.body()?.response?.body?.items?.item.orEmpty()
                     searchItem.clear()
+                    val likePopfiles = PrefManager.getLikeItem(requireContext())
+                        .mapNotNull { it.popfile }
+                        .toSet()
                     itemList.forEach { item ->
                         searchItem.add(
                             SearchDogData(
                                 item.popfile1,
-                                item.kindFullNm ?: item.kindNm ?: item.kindCd,
+                                normalizeDogKindName(item.kindFullNm ?: item.kindNm ?: item.kindCd.orEmpty()),
                                 item.age,
                                 item.careAddr,
                                 item.processState,
@@ -417,7 +460,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                                 item.colorCd,
                                 item.careNm,
                                 item.careTel,
-                                false
+                                likePopfiles.contains(item.popfile1)
                             )
                         )
                     }
@@ -451,14 +494,23 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                     autoWordList.clear()
                     response.body()?.response?.body?.items?.item.orEmpty().forEach { item ->
                         val kindCode = item.kindCd ?: return@forEach
-                        val kindName = item.kindNm ?: return@forEach
+                        val kindName = normalizeDogKindName(item.kindNm ?: return@forEach)
+                        if (kindName.isBlank()) return@forEach
                         if (!hashMap.containsKey(kindName)) {
                             hashMap[kindName] = kindCode
                             autoWordList.add(kindName)
                         }
-                        item.kindFullNm?.let { fullName ->
+                        item.kindFullNm?.let { fullNameRaw ->
+                            val fullName = normalizeDogKindName(fullNameRaw)
+                            if (fullName.isBlank()) return@let
                             hashMap[fullName] = kindCode
+                            if (!autoWordList.contains(fullName)) {
+                                autoWordList.add(fullName)
+                            }
                         }
+                    }
+                    if (::autoCompleteAdapter.isInitialized) {
+                        autoCompleteAdapter.notifyDataSetChanged()
                     }
                     Log.d(Constants.TestTAG, "kindData items: ${autoWordList.size}")
                 } else {
@@ -490,3 +542,20 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         passData = data
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

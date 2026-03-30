@@ -2,10 +2,16 @@ package com.android.dang.search.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
+import com.android.dang.R
 import com.android.dang.databinding.ItemCommonDetailBinding
 import com.android.dang.databinding.ItemRecyclerViewRecentWordBinding
 import com.android.dang.search.searchItemModel.SearchDogData
+import com.android.dang.util.PrefManager.addItem
+import com.android.dang.util.PrefManager.deleteItem
 import com.bumptech.glide.Glide
 
 class SearchAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -95,6 +101,22 @@ class SearchAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 text += "#${currentItem.weight}"
                 text += "\n#${currentItem.specialMark}"
                 searchHolder.age.text = text
+
+                searchHolder.dogLike.setImageResource(
+                    if (currentItem.isLiked) R.drawable.icon_like_on else R.drawable.icon_like_off
+                )
+                searchHolder.dogLike.setOnClickListener {
+                    currentItem.isLiked = !currentItem.isLiked
+                    if (currentItem.isLiked) {
+                        searchHolder.dogLike.setImageResource(R.drawable.icon_like_on)
+                        addItem(searchHolder.itemView.context, currentItem)
+                    } else {
+                        searchHolder.dogLike.setImageResource(R.drawable.icon_like_off)
+                        currentItem.popfile?.let { popfile ->
+                            deleteItem(searchHolder.itemView.context, popfile)
+                        }
+                    }
+                }
             }
 
             1 -> {
@@ -114,9 +136,11 @@ class SearchAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     inner class SearchHolder(binding: ItemCommonDetailBinding) :
         RecyclerView.ViewHolder(binding.root) {
-        val image = binding.dogImg
-        val dogKind = binding.dogName
-        val age = binding.dogTag
+        val image: ImageView = binding.dogImg
+        val dogKind: TextView = binding.dogName
+        val age: TextView = binding.dogTag
+        val dogLike: ImageView = binding.dogLike
+        val dogBox: ConstraintLayout = binding.dogBox
     }
 
     inner class RecentWordHolder(binding: ItemRecyclerViewRecentWordBinding) :
