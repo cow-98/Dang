@@ -48,6 +48,8 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     private var searchItem = mutableListOf<SearchDogData>()
     private var hashMap = HashMap<String, String>()
     private var autoWordList = mutableListOf<String>()
+    private var pendingSearchKeyword: String? = null
+    private var isKindDataLoading = false
     private lateinit var autoCompleteAdapter: ArrayAdapter<String>
     private lateinit var searchAdapter: SearchAdapter
     private val year = LocalDate.now().year
@@ -189,12 +191,32 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     }
 
     private fun performSearch(): Boolean {
-        dogKind = binding.searchEdit.text.toString().trim()
-        val selectedKindNumber = hashMap[dogKind]
-        if (dogKind.isEmpty() || selectedKindNumber.isNullOrEmpty()) {
+        binding.searchEdit.clearComposingText()
+        val inputKeyword = normalizeSearchInput(binding.searchEdit.text.toString())
+        if (inputKeyword.isEmpty()) {
             toast(SEARCH_GUIDE_MESSAGE)
             return false
         }
+
+        val searchTarget = resolveSearchTarget(inputKeyword)
+        if (searchTarget != null) {
+            executeSearch(searchTarget)
+            return true
+        }
+
+        if (hashMap.isEmpty()) {
+            pendingSearchKeyword = inputKeyword
+            kindData()
+            return true
+        }
+
+        toast(SEARCH_GUIDE_MESSAGE)
+        return false
+    }
+
+    private fun executeSearch(searchTarget: Pair<String, String>) {
+        dogKind = searchTarget.first
+        val selectedKindNumber = searchTarget.second
 
         typeOne = 0
         showFilterSection()
@@ -203,7 +225,57 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         searchViewModel.clearSearches()
         searchItem.clear()
         searchData(selectedKindNumber)
-        return true
+    }
+
+    private fun normalizeSearchInput(input: String): String {
+        return normalizeDogKindName(input)
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    private fun resolveSearchTarget(input: String): Pair<String, String>? {
+        if (input.isBlank()) {
+            return null
+        }
+
+        hashMap[input]?.let { return input to it }
+
+        val normalizedEntries = hashMap.entries.map { entry ->
+            normalizeSearchInput(entry.key) to entry.value
+        }
+
+        normalizedEntries.firstOrNull { (keyword, _) ->
+            keyword.equals(input, ignoreCase = true)
+        }?.let { return it }
+
+        val prefixMatches = normalizedEntries.filter { (keyword, _) ->
+            keyword.startsWith(input, ignoreCase = true)
+        }
+        if (prefixMatches.size == 1) {
+            return prefixMatches.first()
+        }
+
+        val containsMatches = normalizedEntries.filter { (keyword, _) ->
+            keyword.contains(input, ignoreCase = true)
+        }
+        if (containsMatches.size == 1) {
+            return containsMatches.first()
+        }
+
+        return null
+    }
+
+    private fun retryPendingSearchIfPossible() {
+        val pendingKeyword = pendingSearchKeyword ?: return
+        val searchTarget = resolveSearchTarget(pendingKeyword)
+        pendingSearchKeyword = null
+
+        if (searchTarget != null) {
+            binding.searchEdit.setText(searchTarget.first)
+            binding.searchEdit.setSelection(searchTarget.first.length)
+            executeSearch(searchTarget)
+            hideKeyboard()
+        }
     }
 
     fun handleSystemBackPressed(): Boolean {
@@ -479,6 +551,11 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     }
 
     private fun kindData() {
+        if (isKindDataLoading) {
+            return
+        }
+
+        isKindDataLoading = true
         Log.d(Constants.TestTAG, "kindData requested")
         apiService.homeDang(
             serviceKey = Util.KEY,
@@ -488,6 +565,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             upkind = 417000
         ).enqueue(object : Callback<HomeData?> {
             override fun onResponse(call: Call<HomeData?>, response: Response<HomeData?>) {
+                isKindDataLoading = false
                 Log.d(Constants.TestTAG, "kindData response: ${response.code()}")
                 if (response.isSuccessful) {
                     hashMap.clear()
@@ -512,6 +590,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                     if (::autoCompleteAdapter.isInitialized) {
                         autoCompleteAdapter.notifyDataSetChanged()
                     }
+                    retryPendingSearchIfPossible()
                     Log.d(Constants.TestTAG, "kindData items: ${autoWordList.size}")
                 } else {
                     Log.e(Constants.TestTAG, "kindData error: ${response.errorBody()?.string()}")
@@ -519,6 +598,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             }
 
             override fun onFailure(call: Call<HomeData?>, t: Throwable) {
+                isKindDataLoading = false
                 Log.e(Constants.TestTAG, "kindData failure: ${t.message}", t)
             }
         })
