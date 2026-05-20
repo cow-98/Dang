@@ -23,9 +23,7 @@ class DictionaryFragment : Fragment() {
     private val binding: FragmentDictionaryBinding
         get() = _binding!!
     private val breedOptions = arrayListOf<BreedsSpinnerData>()
-    private val dictionaryListAdapter by lazy {
-        DictionaryListAdapter(::openBreedDetail)
-    }
+    private lateinit var dictionaryListAdapter: DictionaryListAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,6 +37,8 @@ class DictionaryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        dictionaryListAdapter =
+            DictionaryListAdapter(viewLifecycleOwner.lifecycleScope, ::openBreedDetail)
         binding.dictionaryRecyclerView.adapter = dictionaryListAdapter
         binding.dictionaryRecyclerView.layoutManager =
             LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
@@ -114,6 +114,7 @@ class DictionaryFragment : Fragment() {
             .replace(
                 R.id.fragment_view,
                 DictionaryDetailFragment.newInstance(
+                    breedId = item.id,
                     displayName = displayName,
                     englishName = item.name.orEmpty(),
                     imageUrl = DictionaryBreedUi.imageUrl(item),

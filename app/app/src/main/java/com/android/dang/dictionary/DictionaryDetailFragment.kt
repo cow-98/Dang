@@ -5,9 +5,11 @@ import android.view.View
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.android.dang.R
 import com.android.dang.databinding.FragmentDictionaryDetailBinding
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.launch
 
 class DictionaryDetailFragment : Fragment(R.layout.fragment_dictionary_detail) {
     private var _binding: FragmentDictionaryDetailBinding? = null
@@ -22,6 +24,7 @@ class DictionaryDetailFragment : Fragment(R.layout.fragment_dictionary_detail) {
 
     private fun bindUi() = with(binding) {
         val args = requireArguments()
+        val breedId = args.getInt(ARG_BREED_ID).takeIf { it > 0 }
         val displayName = args.getString(ARG_DISPLAY_NAME).orEmpty()
         val englishName = args.getString(ARG_ENGLISH_NAME).orEmpty()
         val imageUrl = args.getString(ARG_IMAGE_URL)
@@ -35,11 +38,30 @@ class DictionaryDetailFragment : Fragment(R.layout.fragment_dictionary_detail) {
         breedNameEnglish.text = englishName
         breedNameEnglish.isVisible = englishName.isNotBlank() && englishName != displayName
 
-        Glide.with(this@DictionaryDetailFragment)
-            .load(imageUrl)
-            .placeholder(R.drawable.icon_dog1)
-            .error(R.drawable.icon_dog1)
-            .into(breedImage)
+        if (imageUrl.isNullOrBlank()) {
+            breedImage.setImageResource(R.drawable.icon_dog1)
+        } else {
+            Glide.with(this@DictionaryDetailFragment)
+                .load(imageUrl)
+                .placeholder(R.drawable.icon_dog1)
+                .error(R.drawable.icon_dog1)
+                .into(breedImage)
+        }
+
+        if (imageUrl.isNullOrBlank() && breedId != null) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                val resolvedImageUrl = BreedImageRepository.resolveImageUrl(breedId) ?: return@launch
+                if (_binding == null) {
+                    return@launch
+                }
+
+                Glide.with(this@DictionaryDetailFragment)
+                    .load(resolvedImageUrl)
+                    .placeholder(R.drawable.icon_dog1)
+                    .error(R.drawable.icon_dog1)
+                    .into(binding.breedImage)
+            }
+        }
 
         breedSummary.text = info
         breedSummary.isVisible = info.isNotBlank()
@@ -59,6 +81,7 @@ class DictionaryDetailFragment : Fragment(R.layout.fragment_dictionary_detail) {
     }
 
     companion object {
+        private const val ARG_BREED_ID = "breed_id"
         private const val ARG_DISPLAY_NAME = "display_name"
         private const val ARG_ENGLISH_NAME = "english_name"
         private const val ARG_IMAGE_URL = "image_url"
@@ -67,6 +90,7 @@ class DictionaryDetailFragment : Fragment(R.layout.fragment_dictionary_detail) {
         private const val ARG_HISTORY = "history"
 
         fun newInstance(
+            breedId: Int?,
             displayName: String,
             englishName: String,
             imageUrl: String?,
@@ -76,6 +100,7 @@ class DictionaryDetailFragment : Fragment(R.layout.fragment_dictionary_detail) {
         ): DictionaryDetailFragment {
             return DictionaryDetailFragment().apply {
                 arguments = bundleOf(
+                    ARG_BREED_ID to (breedId ?: 0),
                     ARG_DISPLAY_NAME to displayName,
                     ARG_ENGLISH_NAME to englishName,
                     ARG_IMAGE_URL to imageUrl,

@@ -13,7 +13,7 @@ import com.android.dang.search.SearchFragment
 import com.android.dang.search.searchItemModel.SearchDogData
 import com.android.dang.shelter.view.ShelterFragment
 
-class MainActivity : AppCompatActivity(), SearchFragment.DogData, HomeFragment.DogData {
+class MainActivity : AppCompatActivity(), SearchFragment.DogData, HomeFragment.DogData, LikeFragment.DogData {
 
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private val dogDetailFragment = DogDetailFragment()
@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity(), SearchFragment.DogData, HomeFragment.D
 
         homeFragment.dogData(this)
         searchFragment.dogData(this)
+        likeFragment.dogData(this)
     }
 
     private fun switchFragment(fragment: Fragment) {

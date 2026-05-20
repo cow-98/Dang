@@ -5,6 +5,7 @@ import com.android.dang.R
 import com.android.dang.dictionary.data.BreedsData
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.text.Normalizer
 import java.util.Locale
 
 private object DictionaryJsonLoader {
@@ -33,10 +34,44 @@ object BreedNameLocalizer {
         }
 
         val names = cachedNames ?: synchronized(this) {
-            cachedNames ?: DictionaryJsonLoader.loadMap(context, R.raw.dictionary_breed_names_ko)
-                .also { cachedNames = it }
+            cachedNames ?: loadBreedNameMap(context).also { cachedNames = it }
         }
-        return names[fallback].orEmpty().ifBlank { fallback }
+        return names[fallback]
+            ?: names[normalizeLookupKey(fallback)]
+            ?: fallback
+    }
+
+    private fun loadBreedNameMap(context: Context): Map<String, String> {
+        val result = linkedMapOf<String, String>()
+        result.putAll(DictionaryJsonLoader.loadMap(context, R.raw.dictionary_breed_names_ko))
+        result.putAll(DictionaryJsonLoader.loadMap(context, R.raw.dictionary_breed_names_ko_extra))
+        return result.flatMap { (key, value) ->
+            val normalizedKey = key.trim()
+            val normalizedValue = value.trim()
+            if (normalizedKey.isBlank() || normalizedValue.isBlank()) {
+                emptyList()
+            } else {
+                listOf(
+                    normalizedKey to normalizedValue,
+                    normalizeLookupKey(normalizedKey) to normalizedValue
+                )
+            }
+        }.toMap()
+    }
+
+    private fun normalizeLookupKey(value: String): String {
+        return Normalizer.normalize(
+            value
+                .trim()
+                .replace(Regex("\\s+"), " ")
+                .replace('\u2019', '\'')
+                .replace('\u2018', '\'')
+                .replace('\u2013', '-')
+                .replace('\u2014', '-'),
+            Normalizer.Form.NFKD
+        )
+            .replace(Regex("\\p{M}+"), "")
+            .lowercase(Locale.US)
     }
 }
 
@@ -95,7 +130,7 @@ private object DictionaryValueLocalizer {
             cache = cachedDescriptions,
             resId = R.raw.dictionary_descriptions_ko,
             assignCache = { cachedDescriptions = it }
-        ).ifBlank { item.description.orEmpty().trim() }
+        )
     }
 
     fun localizeHistory(context: Context, item: BreedsData.BreedsDataItem): String {
@@ -105,7 +140,7 @@ private object DictionaryValueLocalizer {
             cache = cachedHistories,
             resId = R.raw.dictionary_histories_ko,
             assignCache = { cachedHistories = it }
-        ).ifBlank { item.history.orEmpty().trim() }
+        )
     }
 
     fun localizePurpose(context: Context, item: BreedsData.BreedsDataItem): String {
@@ -115,7 +150,7 @@ private object DictionaryValueLocalizer {
             cache = cachedPurposes,
             resId = R.raw.dictionary_purposes_ko,
             assignCache = { cachedPurposes = it }
-        ).ifBlank { item.bred_for.orEmpty().trim() }
+        )
     }
 
     private fun localizedText(
@@ -171,7 +206,14 @@ object DictionaryBreedUi {
         "Utility" to "\uC720\uD2F8\uB9AC\uD2F0",
         "Working" to "\uC6CC\uD0B9",
         "Guardian" to "\uAC00\uB514\uC5B8",
-        "Companion" to "\uCEF4\uD328\uB2C8\uC5B8"
+        "Companion" to "\uCEF4\uD328\uB2C8\uC5B8",
+        "Northern" to "\uBD81\uBC29\uACAC",
+        "Primitive" to "\uC6D0\uC2DC\uD615",
+        "Primitive/Wild Canid" to "\uC6D0\uC2DC/\uC57C\uC0DD\uACAC",
+        "Scent Hound" to "\uD6C4\uAC01 \uD558\uC6B4\uB4DC",
+        "Scenthound" to "\uD6C4\uAC01 \uD558\uC6B4\uB4DC",
+        "Sighthound" to "\uC2DC\uAC01 \uD558\uC6B4\uB4DC",
+        "Spitz and Primitive Types" to "\uC2A4\uD53C\uCE20 \uBC0F \uC6D0\uC2DC\uD615"
     )
 
     fun imageUrl(item: BreedsData.BreedsDataItem): String? {
@@ -233,10 +275,12 @@ object DictionaryBreedUi {
     fun description(context: Context, item: BreedsData.BreedsDataItem): String {
         return normalizeParagraph(DictionaryValueLocalizer.localizeDescription(context, item))
             .ifBlank { normalizeValue(DictionaryValueLocalizer.localizePurpose(context, item)) }
+            .ifBlank { normalizeParagraph(item.description.orEmpty()) }
     }
 
     fun history(context: Context, item: BreedsData.BreedsDataItem): String {
         return normalizeParagraph(DictionaryValueLocalizer.localizeHistory(context, item))
+            .ifBlank { normalizeParagraph(item.history.orEmpty()) }
     }
 
     private fun appendFact(facts: MutableList<String>, label: String, value: String?) {
@@ -254,10 +298,23 @@ object DictionaryBreedUi {
     private fun localizeCountry(context: Context, item: BreedsData.BreedsDataItem): String {
         val countryCode = item.country_code.orEmpty().trim()
         if (countryCode.isNotBlank()) {
-            val localized = Locale("", countryCode.uppercase(Locale.US))
-                .getDisplayCountry(Locale.KOREAN)
-                .trim()
-            if (localized.isNotBlank() && !localized.equals(countryCode, ignoreCase = true)) {
+            val localized = countryCode.split(',')
+                .mapNotNull { code ->
+                    val normalizedCode = code.trim()
+                    if (normalizedCode.isBlank()) {
+                        null
+                    } else {
+                        Locale("", normalizedCode.uppercase(Locale.US))
+                            .getDisplayCountry(Locale.KOREAN)
+                            .trim()
+                            .takeIf {
+                                it.isNotBlank() && !it.equals(normalizedCode, ignoreCase = true)
+                            }
+                    }
+                }
+                .joinToString(", ")
+
+            if (localized.isNotBlank()) {
                 return localized
             }
         }
@@ -275,7 +332,7 @@ object DictionaryBreedUi {
     }
 
     private fun formatMetric(value: String?, unit: String): String? {
-        val normalized = normalizeRange(value)
+        val normalized = normalizeMetricRange(value)
         return if (normalized.isBlank()) {
             null
         } else {
@@ -286,6 +343,17 @@ object DictionaryBreedUi {
     private fun normalizeRange(value: String?): String {
         return value.orEmpty()
             .trim()
+            .replace("-", " - ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    private fun normalizeMetricRange(value: String?): String {
+        return value.orEmpty()
+            .trim()
+            .replace(Regex("(?i)female\\s*:"), "\uC554\uCEF7 ")
+            .replace(Regex("(?i)\\bmale\\s*:"), "\uC218\uCEF7 ")
+            .replace(";", " / ")
             .replace("-", " - ")
             .replace(Regex("\\s+"), " ")
             .trim()

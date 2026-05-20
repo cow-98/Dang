@@ -55,9 +55,15 @@ class LikeAdapter(private val mContext: Context) :
         val processText = ellipsizeText(currentItem.age, currentItem.specialMark, currentItem.careAddr, currentItem.processState, 70)
         holder.dogTag.text = processText
 
+        holder.itemView.setOnClickListener {
+            val adapterPosition = holder.bindingAdapterPosition
+            if (adapterPosition != RecyclerView.NO_POSITION) {
+                clickListener?.onItemClick(items[adapterPosition], adapterPosition)
+            }
+        }
 
         holder.dogLike.setOnClickListener {
-            clickListener?.onItemClick(items[position], position)
+            // Like-list deletion is handled by swipe, so the heart icon does not navigate.
         }
         if (currentItem.isLiked) {
             holder.dogLike.setImageResource(R.drawable.icon_like_on)

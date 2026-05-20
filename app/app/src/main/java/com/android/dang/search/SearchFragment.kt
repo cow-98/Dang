@@ -32,6 +32,7 @@ import com.android.dang.search.searchItemModel.SearchDogData
 import com.android.dang.search.searchViewModel.RecentViewModel
 import com.android.dang.search.searchViewModel.SearchViewModel
 import com.android.dang.util.PrefManager
+import com.android.dang.mock.MockScenario
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -77,6 +78,8 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         private const val MALE_LABEL = "\uC218\uCEF7"
         private const val FEMALE_LABEL = "\uC554\uCEF7"
         private const val NEUTERED_LABEL = "\uC911\uC131\uD654"
+        private const val MOCK_KIND_NAME = "\uD478\uB4E4"
+        private const val MOCK_KIND_CODE = "MOCK_POODLE"
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -502,6 +505,21 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     }
 
     private fun searchData(kind: String) {
+        if (MockScenario.isSearchEmpty()) {
+            searchItem.clear()
+            searchViewModel.searches(searchItem)
+            recentAdd(dogKind)
+            return
+        }
+
+        if (MockScenario.isSearchNoPhone()) {
+            searchItem.clear()
+            searchItem.add(mockDogWithoutPhone())
+            searchViewModel.searches(searchItem)
+            recentAdd(dogKind)
+            return
+        }
+
         Log.d(Constants.TestTAG, "searchData requested: kind=$kind, keyword=$dogKind")
         SearchRetrofitClient.apiService.abandonedDogSearch(
             numOfRows = 30,
@@ -555,6 +573,21 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             return
         }
 
+        if (MockScenario.isEnabled()) {
+            hashMap.clear()
+            autoWordList.clear()
+
+            hashMap[MOCK_KIND_NAME] = MOCK_KIND_CODE
+            autoWordList.add(MOCK_KIND_NAME)
+
+            if (::autoCompleteAdapter.isInitialized) {
+                autoCompleteAdapter.notifyDataSetChanged()
+            }
+
+            retryPendingSearchIfPossible()
+            return
+        }
+
         isKindDataLoading = true
         Log.d(Constants.TestTAG, "kindData requested")
         apiService.homeDang(
@@ -602,6 +635,27 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 Log.e(Constants.TestTAG, "kindData failure: ${t.message}", t)
             }
         })
+    }
+
+
+    private fun mockDogWithoutPhone(): SearchDogData {
+        return SearchDogData(
+            popfile = "",
+            kindCd = MOCK_KIND_NAME,
+            age = "2022",
+            careAddr = "Mock address",
+            processState = "protecting",
+            sexCd = "M",
+            neuterYn = "N",
+            weight = "5kg",
+            specialMark = "Mock dog without shelter phone",
+            noticeNo = "MOCK-001",
+            happenPlace = "Mock place",
+            colorCd = "white",
+            careNm = "Mock shelter",
+            careTel = "",
+            isLiked = false
+        )
     }
 
     private fun hideKeyboard() {

@@ -24,6 +24,7 @@ class LikeFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private var currentSnackbar: Snackbar? = null
     private var navBarView: View? = null
+    private var passData: DogData? = null
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -46,7 +47,9 @@ class LikeFragment : Fragment() {
         recyclerView.adapter = adapter
 
         adapter.setOnItemClickListener(object : LikeAdapter.OnItemClickListener {
-            override fun onItemClick(item: SearchDogData, position: Int) = Unit
+            override fun onItemClick(item: SearchDogData, position: Int) {
+                passData?.pass(item)
+            }
         })
 
         navBarView = requireActivity().findViewById(R.id.nav_bar)
@@ -105,5 +108,13 @@ class LikeFragment : Fragment() {
         navBarView = null
         super.onDestroyView()
         _binding = null
+    }
+
+    interface DogData {
+        fun pass(list: SearchDogData)
+    }
+
+    fun dogData(data: DogData) {
+        passData = data
     }
 }

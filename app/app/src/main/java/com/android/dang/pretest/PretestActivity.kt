@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.android.dang.mock.MockScenario
 
 class PretestActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPretestBinding
@@ -23,6 +24,9 @@ class PretestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        MockScenario.applyFrom(intent)
+        
         if (SharedPref.getBoolean(Constants.IS_PRE_CONFIRM, false)) {
             gotoMainActivity()
             return
