@@ -16,7 +16,6 @@ import com.android.dang.shelter.view.ShelterFragment
 class MainActivity : AppCompatActivity(), SearchFragment.DogData, HomeFragment.DogData, LikeFragment.DogData {
 
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
-    private val dogDetailFragment = DogDetailFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,6 +97,7 @@ class MainActivity : AppCompatActivity(), SearchFragment.DogData, HomeFragment.D
     }
 
     override fun pass(list: SearchDogData) {
+        val dogDetailFragment = DogDetailFragment()
         dogDetailFragment.receiveData(list)
         setFragment(dogDetailFragment)
     }

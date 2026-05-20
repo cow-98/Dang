@@ -45,6 +45,9 @@ class DogDetailFragment : Fragment(R.layout.fragment_dog_detail) {
         binding.dogName.text = formatDogName(detailData.kindCd)
         binding.dogId.text = detailData.noticeNo.orEmpty()
         binding.dogInfo.text = buildDogInfo(detailData)
+        binding.dogInfoScroll.post {
+            binding.dogInfoScroll.scrollTo(0, 0)
+        }
         updateLikeIcon()
     }
 
