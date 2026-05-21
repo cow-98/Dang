@@ -8,6 +8,7 @@ object MockScenario {
     const val NONE = ""
     const val SEARCH_EMPTY = "search_empty"
     const val SEARCH_NO_PHONE = "search_no_phone"
+    const val SEARCH_RECENT_LIMIT = "search_recent_limit"
 
     private const val PREF_KEY = "DANG_MOCK_SCENARIO"
 
@@ -26,6 +27,10 @@ object MockScenario {
 
     fun isSearchNoPhone(): Boolean {
         return current() == SEARCH_NO_PHONE
+    }
+
+    fun isSearchRecentLimit(): Boolean {
+        return current() == SEARCH_RECENT_LIMIT
     }
 
     fun isEnabled(): Boolean {

@@ -23,11 +23,10 @@ import com.android.dang.R
 import com.android.dang.databinding.FragmentSearchBinding
 import com.android.dang.home.retrofit.HomeData
 import com.android.dang.retrofit.Constants
+import com.android.dang.retrofit.kind.Kind
 import com.android.dang.search.adapter.SearchAdapter
 import com.android.dang.search.adapter.SearchAdapter.Companion.typeOne
 import com.android.dang.search.retrofit.SearchRetrofitClient
-import com.android.dang.home.retrofit.RetrofitClient.apiService
-import com.android.dang.home.retrofit.Util
 import com.android.dang.search.searchItemModel.SearchDogData
 import com.android.dang.search.searchViewModel.RecentViewModel
 import com.android.dang.search.searchViewModel.SearchViewModel
@@ -80,6 +79,10 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         private const val NEUTERED_LABEL = "\uC911\uC131\uD654"
         private const val MOCK_KIND_NAME = "\uD478\uB4E4"
         private const val MOCK_KIND_CODE = "MOCK_POODLE"
+        private val MOCK_RECENT_KIND_PAIRS = (1..21).map { index ->
+            val number = index.toString().padStart(2, '0')
+            "MockBreed$number" to "MOCK_BREED_$number"
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -520,6 +523,14 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             return
         }
 
+        if (MockScenario.isSearchRecentLimit()) {
+            searchItem.clear()
+            searchItem.add(mockDogForRecentLimit())
+            searchViewModel.searches(searchItem)
+            recentAdd(dogKind)
+            return
+        }
+
         Log.d(Constants.TestTAG, "searchData requested: kind=$kind, keyword=$dogKind")
         SearchRetrofitClient.apiService.abandonedDogSearch(
             numOfRows = 30,
@@ -577,8 +588,15 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             hashMap.clear()
             autoWordList.clear()
 
-            hashMap[MOCK_KIND_NAME] = MOCK_KIND_CODE
-            autoWordList.add(MOCK_KIND_NAME)
+            if (MockScenario.isSearchRecentLimit()) {
+                MOCK_RECENT_KIND_PAIRS.forEach { (kindName, kindCode) ->
+                    hashMap[kindName] = kindCode
+                    autoWordList.add(kindName)
+                }
+            } else {
+                hashMap[MOCK_KIND_NAME] = MOCK_KIND_CODE
+                autoWordList.add(MOCK_KIND_NAME)
+            }
 
             if (::autoCompleteAdapter.isInitialized) {
                 autoCompleteAdapter.notifyDataSetChanged()
@@ -590,34 +608,21 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
 
         isKindDataLoading = true
         Log.d(Constants.TestTAG, "kindData requested")
-        apiService.homeDang(
-            serviceKey = Util.KEY,
-            numOfRows = 1000,
-            pageNo = 1,
-            type = "json",
-            upkind = 417000
-        ).enqueue(object : Callback<HomeData?> {
-            override fun onResponse(call: Call<HomeData?>, response: Response<HomeData?>) {
+        SearchRetrofitClient.apiService.kindSearch()
+            .enqueue(object : Callback<Kind?> {
+            override fun onResponse(call: Call<Kind?>, response: Response<Kind?>) {
                 isKindDataLoading = false
                 Log.d(Constants.TestTAG, "kindData response: ${response.code()}")
                 if (response.isSuccessful) {
                     hashMap.clear()
                     autoWordList.clear()
                     response.body()?.response?.body?.items?.item.orEmpty().forEach { item ->
-                        val kindCode = item.kindCd ?: return@forEach
-                        val kindName = normalizeDogKindName(item.kindNm ?: return@forEach)
+                        val kindCode = item.kindCd
+                        val kindName = normalizeDogKindName(item.kindNm)
                         if (kindName.isBlank()) return@forEach
                         if (!hashMap.containsKey(kindName)) {
                             hashMap[kindName] = kindCode
                             autoWordList.add(kindName)
-                        }
-                        item.kindFullNm?.let { fullNameRaw ->
-                            val fullName = normalizeDogKindName(fullNameRaw)
-                            if (fullName.isBlank()) return@let
-                            hashMap[fullName] = kindCode
-                            if (!autoWordList.contains(fullName)) {
-                                autoWordList.add(fullName)
-                            }
                         }
                     }
                     if (::autoCompleteAdapter.isInitialized) {
@@ -630,7 +635,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 }
             }
 
-            override fun onFailure(call: Call<HomeData?>, t: Throwable) {
+            override fun onFailure(call: Call<Kind?>, t: Throwable) {
                 isKindDataLoading = false
                 Log.e(Constants.TestTAG, "kindData failure: ${t.message}", t)
             }
@@ -654,6 +659,26 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             colorCd = "white",
             careNm = "Mock shelter",
             careTel = "",
+            isLiked = false
+        )
+    }
+
+    private fun mockDogForRecentLimit(): SearchDogData {
+        return SearchDogData(
+            popfile = "",
+            kindCd = dogKind,
+            age = "2022",
+            careAddr = "Mock address",
+            processState = "protecting",
+            sexCd = "M",
+            neuterYn = "N",
+            weight = "5kg",
+            specialMark = "Mock dog for recent keyword limit",
+            noticeNo = "MOCK-${dogKind}",
+            happenPlace = "Mock place",
+            colorCd = "white",
+            careNm = "Mock shelter",
+            careTel = "010-0000-0000",
             isLiked = false
         )
     }

@@ -12,10 +12,12 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface SearchApiService {
-    @GET("kind")
+    @GET("kind_v2")
     fun kindSearch(
         @Query("serviceKey") serviceKey: String = Util.KEY,
         @Query("up_kind_cd") kind: Int = 417000,
+        @Query("numOfRows") numOfRows: Int = 300,
+        @Query("pageNo") pageNo: Int = 1,
         @Query("_type") type: String = "json"
     ): retrofit2.Call<Kind?>
 
